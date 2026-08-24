@@ -1,0 +1,48 @@
+# Risk Register
+
+| ID | Risk | Impact | Status / Mitigation |
+|---|---|---|---|
+| R-001 | Offline synchronization conflicts and ordering | High | Define policy in PRD/Data/API phases; require idempotency and server validation |
+| R-002 | Exposure of sensitive child data | Critical | Tenant isolation, least privilege, audit and security design |
+| R-003 | Scale transition from pilot to 1M+ students | High | Modular boundaries, stateless services, async processing and benchmarks |
+| R-004 | Ambiguous jurisdiction and retention rules | High | Open question before final security/privacy specification |
+# Risk Register
+
+## Phase 07
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-07-01 | Offline access survives revocation | High | Bounded authority, local lock/purge, server rejection/audit; duration policy pending | Must resolve before Driver production/security sign-off |
+| R-07-02 | Audit evidence manipulation/loss | Medium | Audit integrity policy explicitly requires ordered tamper-evident evidence, independent verification checkpoints, restricted administration, durable intent and escalation; retention/compliance remain pending | Verify design preserves invariants before implementation |
+| R-07-03 | Session/device compromise | High | Session/device lifecycle policy and privileged re-authentication pending | Must resolve before implementation security sign-off |
+| R-07-04 | Async notification loss/phantom delivery | High | Transactional outbox candidate and idempotent workers documented | Architecture constraint captured; test evidence pending |
+| R-07-05 | Event-burst/retry overload | High | Protected critical capacity and bounded non-critical work documented | Load/failure evidence pending |
+| R-07-06 | Stale dashboard/read state | Medium | Derived read model, freshness and rebuildability constraints documented | Test evidence pending |
+
+## Phase 08
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-08-01 | Cross-tenant reference leakage | High | Composite ownership enforcement and tenant-integrity matrix documented | Blocks schema/implementation if violated |
+| R-08-02 | Duplicate/conflicting offline transport effect | High | Scoped fingerprint idempotency and transition serialization documented | Blocks transport implementation until preserved |
+| R-08-03 | Outbox duplicate/lost sensitive side effect | High | Durable lease/dedup/payload policy documented | Blocks worker/notification implementation until preserved |
+| R-08-04 | Audit evidence ambiguity or tampering | High | Atomic audit evidence and verification trust boundary documented | Blocks audit security claims until preserved |
+| R-08-05 | Partitioning weakens global uniqueness | Medium | Deferred DB-ADR-018 before partition activation | Does not block pilot documentation |
+| R-08-06 | Sensitive export leak | Medium | Export disabled pending lifecycle approval | Does not block baseline transport MVP |
+
+## Phase 09
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-09-01 | Replayed critical result leaks after revoked authority | High | Authenticate and reauthorize before safe replay; deny without original protected body | Must be preserved in implementation |
+| R-09-02 | Offline batch ambiguity causes false transport confirmation | High | Per-item identity/outcome, dependency ordering, response-loss retry and no aggregate fabricated success | Must be testable before Driver release |
+| R-09-03 | Privileged or cross-tenant field escalation | High | Endpoint/action/field matrix, server-derived scope, allowlists and audit | Must be enforced by security review |
+
+## Phase 10
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-10-01 | Security design controls are not yet implemented or tested | High | §108.1 acceptance matrix; execution evidence required before implementation/production claim | Does not block documentation Gate; blocks security-effectiveness claim |
+| R-10-02 | Historical offline authority is ambiguous | High | Default current-authority denial; exception disabled until Commander-approved policy | Blocks Driver offline production release |
+| R-10-03 | Tenant/worker/audit/cache boundary bypass | High | §108.3 defense-in-depth contract and later enforcement evidence | Blocks implementation security sign-off |
+| R-10-04 | Child-data retention/jurisdiction obligations unknown | High | Explicit legal/policy dependency; no compliance claim | Blocks production privacy/compliance release |
