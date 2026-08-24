@@ -17,8 +17,8 @@ This review covers repository/documentation/CI foundation only. It does not clai
 
 ## Gate Result
 
-Recommended: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
+Commander-approved: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 
 ## Non-blocking open question
 
-Whether the Commander authorizes activation of the recommended GitHub branch ruleset and repository-wide Actions restrictions. This remains non-blocking for the current foundation artifacts, but blocks implementation-governance completion.
+The Commander declined activation of the recommended GitHub branch ruleset and repository-wide Actions restrictions for now. This remains non-blocking for the current foundation artifacts, but blocks implementation-governance completion until revisited.

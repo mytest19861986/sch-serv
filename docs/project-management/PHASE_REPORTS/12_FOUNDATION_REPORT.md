@@ -6,7 +6,7 @@ Repository Setup and Foundation Preparation.
 
 ## Status
 
-IN_PROGRESS. Foundation-only scope; business implementation remains forbidden.
+CLOSED: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (94/100 GREEN). Foundation-only scope is complete; business implementation remains forbidden.
 
 ## Evidence
 
@@ -31,6 +31,6 @@ No business feature, API, database schema, authentication flow, UI, deployment c
 
 Decide whether to enable a `main` branch ruleset and repository-wide Actions restrictions described in `docs/development/REPOSITORY_GOVERNANCE.md` before implementation governance sign-off.
 
-## Recommendation
+## Commander Gate Disposition
 
-PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS for the foundation artifacts, conditional on Commander accepting the deferred external governance decision.
+PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS. The Commander declined live GitHub branch-protection/ruleset and repository-wide Actions policy changes for now. This remains a documented non-blocking governance follow-up; Phase 13+ is still locked.
