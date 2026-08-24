@@ -6,3 +6,14 @@ build/
 dist/
 .gradle/
 *.keystore
+*.pem
+*.key
+*.p12
+*.pfx
+google-services.json
+GoogleService-Info.plist
+*.tfstate
+*.tfvars
+coverage/
+*.db
+*.sqlite

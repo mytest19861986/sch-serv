@@ -1,9 +1,11 @@
 name: Foundation Validation
 on: [pull_request, push]
+permissions:
+  contents: read
 jobs:
   documentation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Validate required foundation files
-        run: test -f README.md && test -f .env.example && test -d docs
+        run: test -f README.md && test -f .env.example && test -f CONTRIBUTING.md && test -f SECURITY.md && test -f .github/CODEOWNERS && test -f tests/README.md && test -d docs
