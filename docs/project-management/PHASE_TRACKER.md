@@ -14,7 +14,7 @@
 | 08 | Database Design | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (86/100 GREEN) |
 | 09 | API Specification | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (86/100 GREEN) |
 | 10 | Security Design | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
-| 11 | Technical Specification | Authorized / In Progress |
-| 12 | Repository Setup | Pending authorization |
+| 11 | Technical Specification | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
+| 12 | Repository Setup | Authorized / In Progress (foundation only) |
 | 13 | Implementation | Forbidden until authorized |
 | 14–18 | Test, Security, Performance, Deployment, Documentation | Pending authorization |

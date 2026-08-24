@@ -1,1 +1,9 @@
+# Phase 12 proposal: all paths have an accountable owner while the repository
+# remains single-maintainer. Enforced review requirements need a GitHub branch
+# protection or ruleset decision before they can become effective.
 * @mytest19861986
+/.github/ @mytest19861986
+/docs/security/ @mytest19861986
+/infrastructure/ @mytest19861986
+/.env.example @mytest19861986
+/SECURITY.md @mytest19861986

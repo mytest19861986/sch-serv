@@ -8,4 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Validate required foundation files
-        run: test -f README.md && test -f .env.example && test -f CONTRIBUTING.md && test -f SECURITY.md && test -f .github/CODEOWNERS && test -f tests/README.md && test -d docs
+        run: |
+          test -f README.md && test -f .env.example && test -f CONTRIBUTING.md && test -f SECURITY.md && test -f .github/CODEOWNERS && test -f tests/README.md && test -d docs
+          test -f apps/android-driver/README.md && test -f apps/android-parent/README.md && test -f apps/web-school-dashboard/README.md && test -f apps/web-admin-dashboard/README.md && test -f services/backend/README.md && test -f packages/README.md && test -f infrastructure/README.md && test -f scripts/README.md
+          ! git ls-files | grep -E '(^|/)(\.env|.*\.(pem|key|p12|pfx)|google-services\.json|GoogleService-Info\.plist|.*\.tfstate)$'

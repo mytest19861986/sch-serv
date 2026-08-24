@@ -9,11 +9,12 @@
 - Phase 04 User Stories and Acceptance Criteria.
 - Phase 05 User Flows and State Transitions.
 - Phase 06 UX Information Architecture and Interaction Specification (64/64 reconciliation complete).
+- Phase 11 Technical Specification (88/100 GREEN; Commander-closed).
 
 ## In Progress
 
-- Phase 11 Technical Specification (authorized; documentation only).
+- Phase 12 Repository Setup and Foundation (authorized; no business implementation).
 
 ## Next
 
-- Complete Phase 11 Technical Specification. Phase 12+ and implementation remain locked.
+- Complete Phase 12 foundation report and Commander Gate decision. Phase 13+ and implementation remain locked.

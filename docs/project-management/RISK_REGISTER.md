@@ -1,5 +1,12 @@
 # Risk Register
 
+## Phase 12
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-12-01 | Direct commits or mutable CI policy bypass intended review controls | High | Governance proposal and pinned workflow are present; branch ruleset/Actions policy requires Commander authorization | Must resolve before implementation governance sign-off |
+| R-12-02 | Future feature work enters reserved boundaries without approved architecture | Medium | Non-executable marker files and CI validation establish boundaries; implementation remains locked | Does not block foundation artifact completion |
+
 | ID | Risk | Impact | Status / Mitigation |
 |---|---|---|---|
 | R-001 | Offline synchronization conflicts and ordering | High | Define policy in PRD/Data/API phases; require idempotency and server validation |
