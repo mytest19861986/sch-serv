@@ -8,5 +8,5 @@ export class AssignmentsAuthorizationPolicy {
   isSchoolOperator(c: AssignmentsAuthorizationContext): boolean { return c.principal.roles.includes('school-operator'); }
   isDriver(c: AssignmentsAuthorizationContext): boolean { return c.principal.roles.includes('driver'); }
   canManage(c: AssignmentsAuthorizationContext, tenantId: string): boolean { return this.isSuperAdmin(c) || (this.isSchoolAdmin(c) && c.principal.tenantId === tenantId); }
-  canRead(c: AssignmentsAuthorizationContext, tenantId: string): boolean { return this.canManage(c, tenantId) || (this.isSchoolOperator(c) && c.principal.tenantId === tenantId) || this.isDriver(c); }
+  canRead(c: AssignmentsAuthorizationContext, tenantId: string): boolean { return this.canManage(c, tenantId) || (this.isSchoolOperator(c) && c.principal.tenantId === tenantId) || (this.isDriver(c) && c.principal.tenantId === tenantId); }
 }
