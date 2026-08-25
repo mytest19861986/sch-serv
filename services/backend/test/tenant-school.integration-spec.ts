@@ -18,7 +18,7 @@ describe('Tenant/School vertical slice integration and security negatives', () =
     if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL_REQUIRED_FOR_TENANT_SCHOOL_TEST');
     process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars';
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    await runMigrations(pool);
+    await Promise.all([runMigrations(pool), runMigrations(pool)]);
     await pool.query('DELETE FROM audit_record');
     await pool.query('DELETE FROM school');
     await pool.query('DELETE FROM tenant');
@@ -104,5 +104,8 @@ describe('Tenant/School vertical slice integration and security negatives', () =
     expect((await request(app.getHttpServer()).get(`/schools/${school.id}`).set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
     const audit = await pool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM audit_record WHERE action IN ('tenant.update', 'school.update')");
     expect(Number(audit.rows[0]!.count)).toBeGreaterThanOrEqual(3);
+    const auditId = (await pool.query<{ id: string }>('SELECT id FROM audit_record LIMIT 1')).rows[0]!.id;
+    await expect(pool.query('UPDATE audit_record SET outcome = $1 WHERE id = $2', ['tampered', auditId])).rejects.toThrow('AUDIT_APPEND_ONLY');
+    await expect(pool.query('DELETE FROM audit_record WHERE id = $1', [auditId])).rejects.toThrow('AUDIT_APPEND_ONLY');
   });
 });

@@ -9,6 +9,7 @@ type TenantRow = { id: string; name: string; status: LifecycleStatus; version: n
 type SchoolRow = TenantRow & { tenant_id: string };
 export interface AuditContext { readonly actorId: string; readonly correlationId: string; }
 export interface SchoolUpdateAuditContext extends AuditContext { readonly tenantId?: string; }
+function lifecycleDenied(): Error { const error = new Error('TENANT_LIFECYCLE_DENIED'); Object.assign(error, { code: 'TENANT_LIFECYCLE_DENIED' }); return error; }
 
 function tenantFromRow(row: TenantRow): TenantRecord { return { id: row.id, name: row.name, status: row.status, version: row.version, createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString() }; }
 function schoolFromRow(row: SchoolRow): SchoolRecord { return { ...tenantFromRow(row), tenantId: row.tenant_id }; }
@@ -45,6 +46,8 @@ export class TenantSchoolRepository implements OnModuleDestroy {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      const tenant = await client.query<{ id: string; status: LifecycleStatus }>('SELECT id, status FROM tenant WHERE id = $1 FOR UPDATE', [input.tenantId]);
+      if (!tenant.rows[0] || tenant.rows[0].status !== 'active') throw lifecycleDenied();
       const result = await client.query<SchoolRow>('INSERT INTO school (id, tenant_id, name) VALUES ($1, $2, $3) RETURNING id, tenant_id, name, status, version, created_at, updated_at', [randomUUID(), input.tenantId, input.name]);
       await this.audit(client, context, input.tenantId ?? null, 'school', result.rows[0]!.id, 'school.create'); await client.query('COMMIT');
       return schoolFromRow(result.rows[0]!);
@@ -61,7 +64,7 @@ export class TenantSchoolRepository implements OnModuleDestroy {
 
   async updateSchool(id: string, input: UpdateSchoolInput, context: SchoolUpdateAuditContext): Promise<SchoolRecord | null> {
     const client = await this.pool.connect();
-    try { await client.query('BEGIN'); const result = await client.query<SchoolRow>(
+    try { await client.query('BEGIN'); const tenant = await client.query<{ id: string; status: LifecycleStatus }>('SELECT id, status FROM tenant WHERE id = (SELECT tenant_id FROM school WHERE id = $1) FOR UPDATE', [id]); if (!tenant.rows[0] || tenant.rows[0].status !== 'active') throw lifecycleDenied(); const result = await client.query<SchoolRow>(
       'UPDATE school SET name = COALESCE($2, name), status = COALESCE($3, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5) AND version = $4 RETURNING id, tenant_id, name, status, version, created_at, updated_at',
       [id, input.name ?? null, input.status ?? null, input.version, context.tenantId ?? null]
     ); if (!result.rows[0]) { await client.query('ROLLBACK'); return null; } await this.audit(client, context, result.rows[0].tenant_id, 'school', id, 'school.update'); await client.query('COMMIT'); return schoolFromRow(result.rows[0]); }
