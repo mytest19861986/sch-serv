@@ -7,7 +7,7 @@ export const TENANT_SCHOOL_DB = Symbol('TENANT_SCHOOL_DB');
 
 type TenantRow = { id: string; name: string; status: LifecycleStatus; version: number; created_at: Date; updated_at: Date };
 type SchoolRow = TenantRow & { tenant_id: string };
-export interface AuditContext { readonly actorId: string; readonly correlationId: string; }
+export interface AuditContext { readonly actorId: string; readonly correlationId: string; readonly requiredRoles?: readonly string[]; }
 export interface SchoolUpdateAuditContext extends AuditContext { readonly tenantId?: string; }
 function lifecycleDenied(): Error { const error = new Error('TENANT_LIFECYCLE_DENIED'); Object.assign(error, { code: 'TENANT_LIFECYCLE_DENIED' }); return error; }
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -18,9 +18,9 @@ function schoolFromRow(row: SchoolRow): SchoolRecord { return { ...tenantFromRow
 @Injectable()
 export class TenantSchoolRepository implements OnModuleDestroy {
   constructor(@Inject(TENANT_SCHOOL_DB) private readonly pool: Pool) {}
-  private async lockActorAuthority(client: PoolClient, actorId: string, tenantId?: string): Promise<void> {
+  private async lockActorAuthority(client: PoolClient, actorId: string, tenantId?: string, requiredRoles?: readonly string[]): Promise<void> {
     if (!UUID_PATTERN.test(actorId)) return;
-    const result = await client.query<{ role: string }>(`SELECT r.role FROM "user" u JOIN tenant_membership m ON m.user_id = u.id AND m.status = 'active' JOIN role_assignment r ON r.membership_id = m.id AND r.status = 'active' JOIN tenant t ON t.id = m.tenant_id AND t.status = 'active' WHERE u.id = $1 AND u.status = 'active' AND ($2::uuid IS NULL OR m.tenant_id = $2 OR r.role = 'super-admin') FOR UPDATE OF u, m, r, t`, [actorId, tenantId ?? null]);
+    const result = await client.query<{ role: string }>(`SELECT r.role FROM "user" u JOIN tenant_membership m ON m.user_id = u.id AND m.status = 'active' JOIN role_assignment r ON r.membership_id = m.id AND r.status = 'active' JOIN tenant t ON t.id = m.tenant_id AND t.status = 'active' WHERE u.id = $1 AND u.status = 'active' AND ($2::uuid IS NULL OR m.tenant_id = $2 OR r.role = 'super-admin') AND ($3::text[] IS NULL OR r.role = ANY($3::text[])) FOR UPDATE OF u, m, r, t`, [actorId, tenantId ?? null, requiredRoles ?? null]);
     if (!result.rows.length) { const error = new Error('AUTHORITY_REVOKED'); Object.assign(error, { code: 'AUTHORITY_REVOKED' }); throw error; }
   }
 
@@ -30,7 +30,7 @@ export class TenantSchoolRepository implements OnModuleDestroy {
 
   async createTenant(input: CreateTenantInput, context: AuditContext): Promise<TenantRecord> {
     const client = await this.pool.connect(); const id = randomUUID();
-    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId); const result = await client.query<TenantRow>('INSERT INTO tenant (id, name) VALUES ($1, $2) RETURNING id, name, status, version, created_at, updated_at', [id, input.name]); await this.audit(client, context, id, 'tenant', id, 'tenant.create'); await client.query('COMMIT'); return tenantFromRow(result.rows[0]!); }
+    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, undefined, context.requiredRoles); const result = await client.query<TenantRow>('INSERT INTO tenant (id, name) VALUES ($1, $2) RETURNING id, name, status, version, created_at, updated_at', [id, input.name]); await this.audit(client, context, id, 'tenant', id, 'tenant.create'); await client.query('COMMIT'); return tenantFromRow(result.rows[0]!); }
     catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
   }
 
@@ -41,7 +41,7 @@ export class TenantSchoolRepository implements OnModuleDestroy {
 
   async updateTenant(id: string, input: UpdateTenantInput, context: AuditContext): Promise<TenantRecord | null> {
     const client = await this.pool.connect();
-    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId); const result = await client.query<TenantRow>(
+    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, undefined, context.requiredRoles); const result = await client.query<TenantRow>(
       'UPDATE tenant SET name = COALESCE($2, name), status = COALESCE($3, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND version = $4 RETURNING id, name, status, version, created_at, updated_at',
       [id, input.name ?? null, input.status ?? null, input.version]
     ); if (!result.rows[0]) { await client.query('ROLLBACK'); return null; } await this.audit(client, context, id, 'tenant', id, 'tenant.update'); await client.query('COMMIT'); return tenantFromRow(result.rows[0]); }
@@ -51,7 +51,7 @@ export class TenantSchoolRepository implements OnModuleDestroy {
   async createSchool(input: CreateSchoolInput, context: AuditContext): Promise<SchoolRecord> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, input.tenantId);
+      await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, input.tenantId, context.requiredRoles);
       const tenant = await client.query<{ id: string; status: LifecycleStatus }>('SELECT id, status FROM tenant WHERE id = $1 FOR UPDATE', [input.tenantId]);
       if (!tenant.rows[0] || tenant.rows[0].status !== 'active') throw lifecycleDenied();
       const result = await client.query<SchoolRow>('INSERT INTO school (id, tenant_id, name) VALUES ($1, $2, $3) RETURNING id, tenant_id, name, status, version, created_at, updated_at', [randomUUID(), input.tenantId, input.name]);
@@ -70,7 +70,7 @@ export class TenantSchoolRepository implements OnModuleDestroy {
 
   async updateSchool(id: string, input: UpdateSchoolInput, context: SchoolUpdateAuditContext): Promise<SchoolRecord | null> {
     const client = await this.pool.connect();
-    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, context.tenantId); const tenant = await client.query<{ id: string; status: LifecycleStatus }>('SELECT id, status FROM tenant WHERE id = (SELECT tenant_id FROM school WHERE id = $1) FOR UPDATE', [id]); if (!tenant.rows[0] || tenant.rows[0].status !== 'active') throw lifecycleDenied(); const result = await client.query<SchoolRow>(
+    try { await client.query('BEGIN'); await this.lockActorAuthority(client, context.actorId, context.tenantId, context.requiredRoles); const tenant = await client.query<{ id: string; status: LifecycleStatus }>('SELECT id, status FROM tenant WHERE id = (SELECT tenant_id FROM school WHERE id = $1) FOR UPDATE', [id]); if (!tenant.rows[0] || tenant.rows[0].status !== 'active') throw lifecycleDenied(); const result = await client.query<SchoolRow>(
       'UPDATE school SET name = COALESCE($2, name), status = COALESCE($3, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5) AND version = $4 RETURNING id, tenant_id, name, status, version, created_at, updated_at',
       [id, input.name ?? null, input.status ?? null, input.version, context.tenantId ?? null]
     ); if (!result.rows[0]) { await client.query('ROLLBACK'); return null; } await this.audit(client, context, result.rows[0].tenant_id, 'school', id, 'school.update'); await client.query('COMMIT'); return schoolFromRow(result.rows[0]); }

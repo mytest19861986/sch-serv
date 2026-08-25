@@ -15,7 +15,7 @@ export class TenantSchoolService {
 
   async createTenant(context: TenantSchoolAuthorizationContext, body: unknown) {
     if (!this.policy.canManageTenant(context)) throw new ForbiddenException();
-    return persist(() => this.repository.createTenant(parseCreateTenant(body), { actorId: context.principal.subject, correlationId: context.correlationId }));
+    return persist(() => this.repository.createTenant(parseCreateTenant(body), { actorId: context.principal.subject, correlationId: context.correlationId, requiredRoles: ['super-admin'] }));
   }
 
   async getTenant(context: TenantSchoolAuthorizationContext, id: string) {
@@ -28,7 +28,7 @@ export class TenantSchoolService {
     if (!isUuid(id)) throw new NotFoundException();
     if (!this.policy.canManageTenant(context)) throw new NotFoundException();
     const current = await this.repository.getTenant(id); if (!current) throw new NotFoundException();
-    const updated = await persist(() => this.repository.updateTenant(id, parseUpdate(body), { actorId: context.principal.subject, correlationId: context.correlationId })); if (!updated) throw new ConflictException(); return updated;
+    const updated = await persist(() => this.repository.updateTenant(id, parseUpdate(body), { actorId: context.principal.subject, correlationId: context.correlationId, requiredRoles: ['super-admin'] })); if (!updated) throw new ConflictException(); return updated;
   }
 
   async createSchool(context: TenantSchoolAuthorizationContext, body: unknown) {
@@ -37,7 +37,7 @@ export class TenantSchoolService {
     if (typeof requestedTenant !== 'string' || !isUuid(requestedTenant)) throw new BadRequestException();
     if (!this.policy.canManageSchool(context, requestedTenant)) throw new NotFoundException();
     const tenant = await this.repository.getTenant(requestedTenant, this.policy.isSuperAdmin(context) ? undefined : requestedTenant); if (!tenant || tenant.status !== 'active') throw new NotFoundException();
-    return persist(() => this.repository.createSchool({ tenantId: requestedTenant, name: validateName(value.name) }, { actorId: context.principal.subject, correlationId: context.correlationId }));
+    return persist(() => this.repository.createSchool({ tenantId: requestedTenant, name: validateName(value.name) }, { actorId: context.principal.subject, correlationId: context.correlationId, requiredRoles: ['school-admin', 'super-admin'] }));
   }
 
   async getSchool(context: TenantSchoolAuthorizationContext, id: string) {
@@ -54,6 +54,6 @@ export class TenantSchoolService {
     const current = await this.repository.getSchool(id, scopedTenant); if (!current || !this.policy.canManageSchool(context, current.tenantId)) throw new NotFoundException();
     const tenant = await this.repository.getTenant(current.tenantId, scopedTenant); if (!tenant || (!this.policy.isSuperAdmin(context) && tenant.status !== 'active')) throw new NotFoundException();
     if (!this.policy.isSuperAdmin(context) && current.status !== 'active') throw new NotFoundException();
-    const updated = await persist(() => this.repository.updateSchool(id, parseUpdate(body), { tenantId: scopedTenant, actorId: context.principal.subject, correlationId: context.correlationId })); if (!updated) throw new ConflictException(); return updated;
+    const updated = await persist(() => this.repository.updateSchool(id, parseUpdate(body), { tenantId: scopedTenant, actorId: context.principal.subject, correlationId: context.correlationId, requiredRoles: ['school-admin', 'super-admin'] })); if (!updated) throw new ConflictException(); return updated;
   }
 }
