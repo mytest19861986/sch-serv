@@ -21,10 +21,11 @@ describe('Tenant/School vertical slice integration and security negatives', () =
     // Upgrade fixture: emulate a database that applied the original 001
     // before checksum metadata and the audit migration existed.
     await pool.query('CREATE TABLE IF NOT EXISTS _schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
+    await pool.query('ALTER TABLE _schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT');
     await pool.query(`CREATE TABLE IF NOT EXISTS tenant (id UUID PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'archived')), version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), CONSTRAINT tenant_name_not_blank CHECK (char_length(btrim(name)) BETWEEN 1 AND 200))`);
     await pool.query(`CREATE TABLE IF NOT EXISTS school (id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenant(id) ON DELETE RESTRICT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'archived')), version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), CONSTRAINT school_name_not_blank CHECK (char_length(btrim(name)) BETWEEN 1 AND 200), CONSTRAINT school_tenant_name_unique UNIQUE (tenant_id, name))`);
     await pool.query('CREATE INDEX IF NOT EXISTS school_tenant_status_idx ON school (tenant_id, status, id)');
-    await pool.query("INSERT INTO _schema_migrations (version) VALUES ('001_tenant_school') ON CONFLICT (version) DO NOTHING");
+    await pool.query("INSERT INTO _schema_migrations (version, checksum) VALUES ('001_tenant_school', NULL) ON CONFLICT (version) DO UPDATE SET checksum = NULL");
     await Promise.all([runMigrations(pool), runMigrations(pool)]);
     const legacyUpgrade = await pool.query<{ checksum: string }>("SELECT checksum FROM _schema_migrations WHERE version = '001_tenant_school'");
     expect(legacyUpgrade.rows[0]!.checksum).toBe('legacy-unverified');

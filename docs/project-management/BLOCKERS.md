@@ -8,7 +8,7 @@
 
 ## Phase 13.02 Tenant / School
 
-- Current Gate: `IMPROVEMENT_REQUIRED` pending specialist re-reviews of migration-upgrade remediation commit `29552c3`; CI run `32813378894` passed, with the corrected upgrade fixture awaiting re-run.
+- Current Gate: `IMPROVEMENT_REQUIRED` pending specialist re-reviews of migration-upgrade remediation; CI run `32813686892` exposed a fixture conflict with the pre-run migration and is being corrected.
 - Local PostgreSQL is unavailable, so local migration/integration is not PASS; CI is the authoritative executed database evidence.
 - Production role/membership serialization, production authentication lifecycle, deployment, merge-to-main, and Slice 13.03 remain blocked by governance and approved scope.
 
