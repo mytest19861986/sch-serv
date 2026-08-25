@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Pool } from 'pg';
 import request from 'supertest';
@@ -8,6 +8,7 @@ import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
 import { correlationMiddleware } from '../src/common/correlation.js';
 import { CREDENTIAL_VERIFIER, IDENTITY_STATUS_VERIFIER } from '../src/auth/auth.types.js';
 import { runMigrations } from '../src/db/migrate.js';
+import { UsersRepository } from '../src/users/users.repository.js';
 
 describe('Tenant/School vertical slice integration and security negatives', () => {
   let app: INestApplication;
@@ -40,7 +41,16 @@ describe('Tenant/School vertical slice integration and security negatives', () =
     await pool.query('DELETE FROM tenant');
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(CREDENTIAL_VERIFIER).useValue({ verify: async () => null })
-      .overrideProvider(IDENTITY_STATUS_VERIFIER).useValue({ assertActive: async (principal: unknown) => principal })
+      .overrideProvider(IDENTITY_STATUS_VERIFIER).useFactory({
+        inject: [UsersRepository],
+        factory: (users: UsersRepository) => ({ assertActive: async (principal: { subject: string; tenantId?: string; roles: string[] }) => {
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(principal.subject)) return principal;
+          const authorities = await users.getActorAuthorities(principal.subject);
+          const effective = authorities.filter((a) => !principal.tenantId || a.tenantId === principal.tenantId || a.role === 'super-admin');
+          if (!effective.length) throw new UnauthorizedException();
+          return { ...principal, roles: [...new Set(effective.map((a) => a.role))] };
+        } })
+      })
       .compile();
     app = module.createNestApplication();
     app.use(correlationMiddleware);
