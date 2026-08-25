@@ -14,8 +14,8 @@
 
 ## In Progress
 
-- Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; pre-implementation inspection and scope reconciliation.
+- Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; implementation and required reviews complete, Gate decision pending.
 
 ## Next
 
-- Complete the Slice 13.01 pre-change plan, reconcile the full Commander scope, then implement only the authorized vertical slice.
+- Commander Gate decision for Slice 13.01; keep production auth and Slice 13.02 locked unless explicitly authorized.

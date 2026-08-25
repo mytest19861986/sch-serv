@@ -2,8 +2,8 @@
 
 ```text
 Phase: 13 Implementation — Slice 13.01
-Current Gate: Pre-Implementation Inspection
-Status: IN_PROGRESS / AUTHORIZED
+Current Gate: Slice 13.01 implementation review — PASS recommended, Commander decision pending
+Status: IMPLEMENTATION_COMPLETE / AWAITING_GATE_DECISION
 Governance Setup: Complete
 Phase 01: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS
 Phase 02–06: Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS
