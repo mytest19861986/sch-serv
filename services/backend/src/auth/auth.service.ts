@@ -15,6 +15,7 @@ export class AuthService {
   }
 
   async issueForTestOnly(principal: AuthenticatedPrincipal): Promise<string> {
+    if (process.env.NODE_ENV !== 'test') throw new UnauthorizedException();
     return this.tokenIssuer.issue(principal);
   }
 }

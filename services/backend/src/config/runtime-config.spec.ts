@@ -9,6 +9,10 @@ describe('loadRuntimeConfig', () => {
     expect(() => loadRuntimeConfig({ APP_ENV: 'test', PORT: 'invalid', AUTH_PROVISIONAL_SIGNING_SECRET: 'x'.repeat(32) })).toThrow('CONFIGURATION_INVALID');
   });
 
+  it('rejects production while provisional authentication is selected', () => {
+    expect(() => loadRuntimeConfig({ APP_ENV: 'production', AUTH_PROVISIONAL_SIGNING_SECRET: 'x'.repeat(32) })).toThrow('PROVISIONAL_AUTH_NOT_ALLOWED_IN_PRODUCTION');
+  });
+
   it('returns validated configuration', () => {
     expect(loadRuntimeConfig({ APP_ENV: 'test', PORT: '3001', AUTH_PROVISIONAL_SIGNING_SECRET: 'x'.repeat(32) })).toMatchObject({ environment: 'test', port: 3001 });
   });

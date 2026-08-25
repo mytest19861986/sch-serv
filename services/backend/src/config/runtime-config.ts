@@ -11,6 +11,10 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
   if (environment !== 'development' && environment !== 'test' && environment !== 'production') {
     throw new Error('CONFIGURATION_INVALID');
   }
+  if (environment === 'production') {
+    // The provisional authentication provider has no approved session/revocation policy.
+    throw new Error('PROVISIONAL_AUTH_NOT_ALLOWED_IN_PRODUCTION');
+  }
 
   const portValue = env.PORT ?? '3000';
   const port = Number(portValue);
