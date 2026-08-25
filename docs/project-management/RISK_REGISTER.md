@@ -15,7 +15,8 @@
 |---|---|---|---|---|
 | R-13-02-01 | Final role-claim/membership serialization is not yet approved | High | Centralized provisional mapping; deny-by-default and no production claim | Blocks production identity/membership release |
 | R-13-02-02 | Tenant/School lifecycle URL/method and exact field policy are underspecified in API source | Medium | Minimal documented resource methods implemented; assumptions explicitly recorded; no extra endpoints | Requires product/API decision before expansion |
-| R-13-02-03 | Local environment lacks PostgreSQL | Medium | CI provisions PostgreSQL 16 and executes migration/integration evidence; local NOT_EXECUTED remains explicit | Non-blocking for CI Gate, limits local reproduction |
+| R-13-02-03 | Local environment lacks PostgreSQL | Medium | CI provisions immutable PostgreSQL image and executes migration/integration evidence; local NOT_EXECUTED remains explicit | Non-blocking for CI Gate, limits local reproduction |
+| R-13-02-04 | Specialist re-review of migration-upgrade evidence is pending | High | Re-review requested against corrected fixture on top of `29552c3`; no Gate closure or merge until disposition | Current Slice 13.02 Gate blocker |
 
 ## Phase 12
 
