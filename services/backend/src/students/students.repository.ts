@@ -17,7 +17,7 @@ export class StudentsRepository implements OnModuleDestroy {
   constructor(@Inject(STUDENTS_DB) private readonly pool: Pool) {}
 
   private async lockActorAuthority(client: PoolClient, actorId: string, tenantId: string, requiredRoles: readonly string[]): Promise<void> {
-    if (!UUID_PATTERN.test(actorId)) return;
+    if (!UUID_PATTERN.test(actorId)) throw authorityRevoked();
     const result = await client.query<{ role: string }>(`SELECT r.role FROM "user" u JOIN tenant_membership m ON m.user_id = u.id AND m.status = 'active' JOIN role_assignment r ON r.membership_id = m.id AND r.status = 'active' JOIN tenant t ON t.id = m.tenant_id AND t.status = 'active' WHERE u.id = $1 AND u.status = 'active' AND (m.tenant_id = $2 OR r.role = 'super-admin') AND r.role = ANY($3::text[]) FOR UPDATE OF u, m, r, t`, [actorId, tenantId, requiredRoles]);
     if (!result.rows.length) throw authorityRevoked();
   }

@@ -13,6 +13,7 @@ export class StudentsService {
   constructor(private readonly repository: StudentsRepository, private readonly policy: StudentsAuthorizationPolicy) {}
 
   async create(context: StudentsAuthorizationContext, body: unknown) {
+    if (!isUuid(context.principal.subject)) throw new NotFoundException();
     const input = parseCreate(body);
     const school = await this.repository.getSchoolContext(input.schoolId);
     if (!school || school.status !== 'active') throw new NotFoundException();
@@ -21,6 +22,7 @@ export class StudentsService {
   }
 
   async list(context: StudentsAuthorizationContext, schoolId: string) {
+    if (!isUuid(context.principal.subject)) throw new NotFoundException();
     if (!isUuid(schoolId)) throw new NotFoundException();
     const rows = await this.repository.list(schoolId, this.policy.isSuperAdmin(context) ? undefined : context.principal.tenantId);
     if (!rows.length) return [];
@@ -29,6 +31,7 @@ export class StudentsService {
   }
 
   async get(context: StudentsAuthorizationContext, id: string, schoolId: string) {
+    if (!isUuid(context.principal.subject)) throw new NotFoundException();
     if (!isUuid(id) || !isUuid(schoolId)) throw new NotFoundException();
     const row = await this.repository.get(id, schoolId, this.policy.isSuperAdmin(context) ? undefined : context.principal.tenantId);
     if (!row || !this.policy.canRead(context, row.tenantId)) throw new NotFoundException();
@@ -36,6 +39,7 @@ export class StudentsService {
   }
 
   async update(context: StudentsAuthorizationContext, id: string, schoolId: string, body: unknown) {
+    if (!isUuid(context.principal.subject)) throw new NotFoundException();
     if (!isUuid(id) || !isUuid(schoolId)) throw new NotFoundException();
     const current = await this.repository.get(id, schoolId, this.policy.isSuperAdmin(context) ? undefined : context.principal.tenantId);
     if (!current || !this.policy.canManage(context, current.tenantId)) throw new NotFoundException();

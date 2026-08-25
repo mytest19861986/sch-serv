@@ -71,6 +71,9 @@ describe('Students vertical slice integration and security negatives', () => {
 
   it('denies missing scope, foreign school, unknown fields and unauthorized mutation safely', async () => {
     const adminToken = await token(adminId, ['school-admin'], tenantId); const foreignToken = await token(otherAdminId, ['school-admin'], otherTenantId);
+    const provisionalToken = await token('students-provisional', ['super-admin'], tenantId);
+    expect((await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${provisionalToken}`)).status).toBe(404);
+    expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${provisionalToken}`).send({ school_id: schoolId, display_name: 'Provisional Denied' })).status).toBe(404);
     expect((await request(app.getHttpServer()).get('/students').set('Authorization', `Bearer ${adminToken}`)).status).toBe(400);
     expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${adminToken}`).send({ school_id: otherSchoolId, display_name: 'Foreign' })).status).toBe(404);
     expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${adminToken}`).send({ school_id: schoolId, display_name: 'Nope', tenant_id: tenantId })).status).toBe(400);
