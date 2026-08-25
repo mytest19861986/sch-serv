@@ -45,9 +45,13 @@ import { AssignmentsController } from './assignments/assignments.controller.js';
 import { AssignmentsRepository, ASSIGNMENTS_DB } from './assignments/assignments.repository.js';
 import { AssignmentsService } from './assignments/assignments.service.js';
 import { AssignmentsAuthorizationPolicy } from './assignments/assignments.policy.js';
+import { ExecutionController } from './execution/execution.controller.js';
+import { ExecutionRepository, EXECUTION_DB } from './execution/execution.repository.js';
+import { ExecutionService } from './execution/execution.service.js';
+import { ExecutionAuthorizationPolicy } from './execution/execution.policy.js';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController, VehiclesController, RoutesController, ServicesController, AssignmentsController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController, VehiclesController, RoutesController, ServicesController, AssignmentsController, ExecutionController],
   providers: [
     AuthService,
     AuthGuard,
@@ -91,7 +95,11 @@ import { AssignmentsAuthorizationPolicy } from './assignments/assignments.policy
     { provide: ASSIGNMENTS_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     AssignmentsRepository,
     AssignmentsService,
-    AssignmentsAuthorizationPolicy
+    AssignmentsAuthorizationPolicy,
+    { provide: EXECUTION_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
+    ExecutionRepository,
+    ExecutionService,
+    ExecutionAuthorizationPolicy
   ]
 })
 export class AppModule {}

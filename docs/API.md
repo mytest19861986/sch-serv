@@ -174,6 +174,10 @@ Outbox workers, projections and FCM processing use internal conceptual contracts
 
 The assigned-service contract returns only services currently authorized for the Driver, with freshness/version information.
 
+Slice 13.11 adds `POST /driver/services/{serviceInstanceId}/start` with `expectedVersion`. The server owns actor and authoritative time, transitions only `not_started` to `in_progress`, increments the service-instance version and records the transition audit atomically. A repeated Start after `in_progress` is idempotent without a second audit record.
+
+The Driver execution reads are `GET /driver/active-services`, `GET /driver/services/{serviceInstanceId}/transport-state` and `GET /driver/services/{serviceInstanceId}/roster`. Roster access requires an active started service and returns only active student assignments in the same tenant and school. Invalid authentication is `401`, hidden authority/resource denial is enumeration-safe `404`, and valid OCC conflict is `409`.
+
 Rate policy is operation/actor/tenant-risk aware. Limits do not fabricate outcomes; clients receive `429` or `503` with retry-safe guidance. Critical retries remain idempotent.
 
 ## 31. Driver Student Roster API
