@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS guardian (
   CONSTRAINT guardian_tenant_user_unique UNIQUE (tenant_id, user_id)
 );
 CREATE INDEX IF NOT EXISTS guardian_tenant_status_idx ON guardian (tenant_id, status, id);
+CREATE UNIQUE INDEX IF NOT EXISTS guardian_id_tenant_unique_idx ON guardian (id, tenant_id);
 CREATE TABLE IF NOT EXISTS student_guardian_relationship (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenant(id) ON DELETE RESTRICT,
