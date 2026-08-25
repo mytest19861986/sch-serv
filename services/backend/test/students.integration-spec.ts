@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { AuthService } from '../src/auth/auth.service.js';
-import { CREDENTIAL_VERIFIER } from '../src/auth/auth.types.js';
+import { CREDENTIAL_VERIFIER, IDENTITY_STATUS_VERIFIER } from '../src/auth/auth.types.js';
 import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
 import { correlationMiddleware } from '../src/common/correlation.js';
 
@@ -35,7 +35,12 @@ describe('Students vertical slice integration and security negatives', () => {
     if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL_REQUIRED_FOR_STUDENTS_TEST');
     process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars';
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const module = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(CREDENTIAL_VERIFIER).useValue({ verify: async () => null }).compile();
+    const module = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(CREDENTIAL_VERIFIER).useValue({ verify: async () => null })
+      // Domain integration fixtures use synthetic bootstrap subjects; the production
+      // ActiveIdentityStatusVerifier is covered by its focused unit tests.
+      .overrideProvider(IDENTITY_STATUS_VERIFIER).useValue({ assertActive: async (principal: unknown) => principal })
+      .compile();
     app = module.createNestApplication(); app.use(correlationMiddleware); app.useGlobalFilters(new ApiExceptionFilter()); await app.init(); authService = app.get(AuthService);
     const platformToken = await token('students-bootstrap', ['super-admin']);
     const tenant = await request(app.getHttpServer()).post('/tenants').set('Authorization', `Bearer ${platformToken}`).send({ name: `Students Tenant ${Date.now()}` }); expect(tenant.status).toBe(201); tenantId = tenant.body.id;

@@ -1,23 +1,10 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { DenyByDefaultCredentialVerifier, ProvisionalHmacSessionTokenIssuer } from './provisional-auth.providers.js';
+import { ActiveIdentityStatusVerifier } from './provisional-auth.providers.js';
 
-describe('ProvisionalHmacSessionTokenIssuer', () => {
-  beforeEach(() => { process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars'; });
-
-  it('round-trips only server-issued principal context', async () => {
-    const issuer = new ProvisionalHmacSessionTokenIssuer();
-    const token = await issuer.issue({ subject: 'user-1', tenantId: 'tenant-a', roles: ['foundation-user'] });
-    await expect(issuer.verify(token)).resolves.toEqual({ subject: 'user-1', tenantId: 'tenant-a', roles: ['foundation-user'] });
-  });
-
-  it('rejects a manipulated token', async () => {
-    const issuer = new ProvisionalHmacSessionTokenIssuer();
-    await expect(issuer.verify('not-a-token')).rejects.toBeInstanceOf(UnauthorizedException);
-  });
-});
-
-describe('DenyByDefaultCredentialVerifier', () => {
-  it('rejects credentials by default', async () => {
-    await expect(new DenyByDefaultCredentialVerifier().verify('user', 'password')).resolves.toBeNull();
+describe('ActiveIdentityStatusVerifier', () => {
+  it('fails closed for non-UUID subjects before trusting JWT claims', async () => {
+    const verifier = new ActiveIdentityStatusVerifier({ getActorAuthorities: async () => [] } as never);
+    await expect(verifier.assertActive({ subject: 'synthetic-bootstrap', roles: ['super-admin'], tenantId: 'forged' }))
+      .rejects.toBeInstanceOf(UnauthorizedException);
   });
 });
