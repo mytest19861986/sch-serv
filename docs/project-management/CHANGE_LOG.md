@@ -4,6 +4,8 @@
 
 - Commander closed Slice 13.06 Drivers as `CLOSED_ACCEPTED` and authorized Slice 13.07 Vehicles on `phase13/slice-13-07-vehicles`.
 - Started Slice 13.07 Vehicles with tenant-scoped identity/lifecycle, DB-backed authority, transactional audit, OCC and security-negative integration coverage. Route, Service, Assignment, transport events, offline sync, notifications and dashboards remain out of scope.
+- Commander closed Slice 13.07 Vehicles as `CLOSED_ACCEPTED` at `af2f1a22e8254e96614a1927877d8ff968a184ae` with CI `32836652181` SUCCESS and authorized Slice 13.08 Routes.
+- Started Slice 13.08 Routes on `phase13/slice-13-08-routes` with school/tenant-scoped lifecycle, DB-backed authority, OCC, transactional audit and security-negative integration coverage. Route stops, ordered associations, services, assignments, transport events, offline sync, notifications and dashboards remain out of scope.
 
 - Added documentation-only Project Control Center structure.
 - Validated the Project Control Center structure and recorded governance completion.

@@ -25,3 +25,4 @@
 - Phase 13 Slice 13.06: Drivers; CLOSED_ACCEPTED by Commander. Keep production auth, deployment, and merge-to-main locked.
 
 - Phase 13 Slice 13.07: Vehicles; implement on dedicated branch with exact-SHA CI and Gemini/Qwen/Claude review. Keep production auth, deployment, and merge-to-main locked.
+- Phase 13 Slice 13.08: Routes; implement on dedicated branch with exact-SHA CI and Gemini/Qwen/Claude review. Keep route stops, services, assignments, production auth, deployment, and merge-to-main locked.

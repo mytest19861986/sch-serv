@@ -68,3 +68,17 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - CI evidence: GitHub Actions run `32834345188` is SUCCESS on exact SHA `d28645b7b2f662121dfe84836ff4f6d46b8fd951`; migration, typecheck, lint, build, unit (9 tests), integration (27 tests across 6 suites, including Drivers), and documentation checks passed. The local shell still lacks `DATABASE_URL`, so local DB execution remains explicitly unavailable.
 - External review: complete, corrected packets were dispatched to Gemini, Qwen, and Claude against exact SHA `d28645b7b2f662121dfe84836ff4f6d46b8fd951`, with canonical raw-file references and `NOT_PRESENT` for the non-existent verifier path. Gemini: `PASS` (Critical=0, High=0). Qwen: `PASS` (Critical=0, High=0; LOW follow-up only). Claude: `APPROVED_WITH_NON_BLOCKING_FINDINGS` (Critical=0, High=0; LOW follow-ups only). The prior malformed URL and stale review limitations were superseded by these corrected final-SHA packets.
 - Gate recommendation: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`, pending Commander closure. Merge-to-main, production authentication, and deployment remain locked.
+
+## Slice 13.07 Vehicles Gate Decision
+
+- Status: `CLOSED_ACCEPTED` on `phase13/slice-13-07-vehicles`, exact SHA `af2f1a22e8254e96614a1927877d8ff968a184ae`.
+- CI evidence: run `32836652181` SUCCESS; local typecheck, lint, build and unit (9) passed. Local DB was unavailable because `DATABASE_URL` was not configured; CI supplied migration/integration evidence.
+- External reviews on the exact SHA: Gemini `PASS` (Critical=0, High=0); Qwen `PASS` (Critical=0, High=0, one non-blocking Low); Claude `APPROVED_WITH_NON_BLOCKING_FINDINGS` (Critical=0, High=0, Low-only follow-ups).
+- Real findings remediated before closure: restrictive vehicle ownership FK and identifier semantics documentation. Merge-to-main, production authentication and deployment remain locked.
+
+## Slice 13.08 Routes implementation checkpoint
+
+- Status: `IN_PROGRESS` on dedicated branch `phase13/slice-13-08-routes`, authorized after Vehicles closure.
+- Scope: Route aggregate with school/tenant ownership, bounded name identity, active/archive lifecycle, OCC, current DB-backed authority, transactional audit, scoped API and security-negative integration coverage. Route stops, ordered associations, services, assignments and transport events remain out of scope.
+- Current validation: typecheck, lint, build and unit tests pass locally using the bundled Node runtime. Database/integration validation is pending CI because local `DATABASE_URL` is unavailable.
+- Gate remains open until the implementation checkpoint is committed, CI is green, and exact-SHA Gemini/Qwen/Claude reviews are completed.

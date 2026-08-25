@@ -3,7 +3,7 @@
 ```text
 Phase: 13 Implementation — Slice 13.05 Parents
 Current Gate: Slice 13.04 CLOSED_ACCEPTED (PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS)
-Status: IN_PROGRESS / SLICE_13_07_IN_PROGRESS
+Status: IN_PROGRESS / SLICE_13_08_IN_PROGRESS
 Governance Setup: Complete
 Phase 01: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS
 Phase 02–06: Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS
@@ -19,6 +19,8 @@ Implementation: Slices 13.01–13.05 accepted; Slice 13.06 Drivers in progress
 Repository: Initialized and connected to origin/main; foundation-only commits pushed
 GitHub integration: VERIFIED_READ_WRITE_ACCESS on main; branch protection and repository-wide Actions policy require Commander decision
 Last Updated: 2026-08-25
+
+Current authorized slice: 13.08 Routes on `phase13/slice-13-08-routes`. Slices 13.01–13.07 are Commander-accepted; merge-to-main, production authentication and deployment remain locked.
 ```
 
 ## Current Summary

@@ -1,5 +1,7 @@
 # Phase Tracker
 
+Current implementation control: Slice 13.07 Vehicles `CLOSED_ACCEPTED`; Slice 13.08 Routes `IN_PROGRESS` on `phase13/slice-13-08-routes`. Merge-to-main, production authentication and deployment remain locked.
+
 | Phase | Name | Status |
 |---|---|---|
 | 00 | Master Context | Completed / reference available in conversation |
