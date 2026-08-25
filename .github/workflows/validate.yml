@@ -12,3 +12,22 @@ jobs:
           test -f README.md && test -f .env.example && test -f CONTRIBUTING.md && test -f SECURITY.md && test -f .github/CODEOWNERS && test -f tests/README.md && test -d docs
           test -f apps/android-driver/README.md && test -f apps/android-parent/README.md && test -f apps/web-school-dashboard/README.md && test -f apps/web-admin-dashboard/README.md && test -f services/backend/README.md && test -f packages/README.md && test -f infrastructure/README.md && test -f scripts/README.md
           ! git ls-files | grep -E '(^|/)(\.env|.*\.(pem|key|p12|pfx)|google-services\.json|GoogleService-Info\.plist|.*\.tfstate)$'
+  backend-foundation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: services/backend/pnpm-lock.yaml
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm test:integration
