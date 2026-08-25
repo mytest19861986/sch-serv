@@ -19,10 +19,11 @@
 - Phase 13 Slice 13.03: Users; CLOSED_ACCEPTED by Commander with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 - Phase 13 Slice 13.04: Students; CLOSED_ACCEPTED by Commander at SHA 52a7e02 with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 - Phase 13 Slice 13.05: Parents; CLOSED_ACCEPTED with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS after exact-SHA external review.
+- Phase 13 Slice 13.08: Routes; implementation and exact-SHA review complete; Gate recommendation submitted, Commander closure pending.
 
 ## Next
 
 - Phase 13 Slice 13.06: Drivers; CLOSED_ACCEPTED by Commander. Keep production auth, deployment, and merge-to-main locked.
 
-- Phase 13 Slice 13.07: Vehicles; implement on dedicated branch with exact-SHA CI and Gemini/Qwen/Claude review. Keep production auth, deployment, and merge-to-main locked.
-- Phase 13 Slice 13.08: Routes; implement on dedicated branch with exact-SHA CI and Gemini/Qwen/Claude review. Keep route stops, services, assignments, production auth, deployment, and merge-to-main locked.
+- Phase 13 Slice 13.07: Vehicles; CLOSED_ACCEPTED. Keep production auth, deployment, and merge-to-main locked.
+- Phase 13 Slice 13.09: next slice remains LOCKED pending Commander authorization. Keep route stops, services, assignments, production auth, deployment, and merge-to-main locked.

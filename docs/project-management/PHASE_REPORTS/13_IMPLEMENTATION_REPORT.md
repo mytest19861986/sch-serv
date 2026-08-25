@@ -76,9 +76,10 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - External reviews on the exact SHA: Gemini `PASS` (Critical=0, High=0); Qwen `PASS` (Critical=0, High=0, one non-blocking Low); Claude `APPROVED_WITH_NON_BLOCKING_FINDINGS` (Critical=0, High=0, Low-only follow-ups).
 - Real findings remediated before closure: restrictive vehicle ownership FK and identifier semantics documentation. Merge-to-main, production authentication and deployment remain locked.
 
-## Slice 13.08 Routes implementation checkpoint
+## Slice 13.08 Routes Gate Evidence
 
-- Status: `IN_PROGRESS` on dedicated branch `phase13/slice-13-08-routes`, authorized after Vehicles closure.
+- Status: `GATE_RECOMMENDED` on dedicated branch `phase13/slice-13-08-routes`, exact SHA `2ef3b9ba5060f1bc0a97e811e3db494ce8e4bef2`, authorized after Vehicles closure.
 - Scope: Route aggregate with school/tenant ownership, bounded name identity, active/archive lifecycle, OCC, current DB-backed authority, transactional audit, scoped API and security-negative integration coverage. Route stops, ordered associations, services, assignments and transport events remain out of scope.
-- Current validation: typecheck, lint, build and unit tests pass locally using the bundled Node runtime. Database/integration validation is pending CI because local `DATABASE_URL` is unavailable.
-- Gate remains open until the implementation checkpoint is committed, CI is green, and exact-SHA Gemini/Qwen/Claude reviews are completed.
+- Validation: local typecheck, lint, build and unit tests pass; CI run `32838811639` is SUCCESS with migration and integration tests green.
+- Exact-SHA external reviews: Gemini `PASS` (Critical=0, High=0); Qwen `PASS (with MEDIUM finding)` (Critical=0, High=0); Claude `APPROVED_WITH_NON_BLOCKING_FINDINGS` (Critical=0, High=0). The mismatched `school_id`/`route_id` regression test requested by Claude was added and confirmed resolved.
+- Gate recommendation: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`; Commander closure remains pending. Merge-to-main, production authentication and deployment remain locked.
