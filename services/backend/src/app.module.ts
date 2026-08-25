@@ -11,6 +11,7 @@ import { HealthController } from './health/health.controller.js';
 import { TenantSchoolController } from './tenant-school/tenant-school.controller.js';
 import { TenantSchoolRepository, TENANT_SCHOOL_DB } from './tenant-school/tenant-school.repository.js';
 import { TenantSchoolService } from './tenant-school/tenant-school.service.js';
+import { TenantSchoolAuthorizationPolicy } from './tenant-school/tenant-school.policy.js';
 import { Pool } from 'pg';
 
 @Module({
@@ -23,9 +24,10 @@ import { Pool } from 'pg';
     { provide: SESSION_TOKEN_ISSUER, useClass: ProvisionalHmacSessionTokenIssuer },
     { provide: IDENTITY_STATUS_VERIFIER, useClass: ActiveIdentityStatusVerifier },
     { provide: AUTHORIZATION_POLICY_EVALUATOR, useClass: DefaultDenyAuthorizationPolicyEvaluator },
-    { provide: TENANT_SCHOOL_DB, useFactory: () => new Pool({ connectionString: process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/school_service' }) },
+    { provide: TENANT_SCHOOL_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     TenantSchoolRepository,
-    TenantSchoolService
+    TenantSchoolService,
+    TenantSchoolAuthorizationPolicy
   ]
 })
 export class AppModule {}

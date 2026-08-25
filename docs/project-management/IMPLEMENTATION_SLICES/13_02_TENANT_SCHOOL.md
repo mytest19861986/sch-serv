@@ -20,7 +20,7 @@
 
 ## Minimal schema permitted by the approved design
 
-Only `tenant` and `school` tables are introduced. Each has a UUID primary key, lifecycle state, trusted creation/update timestamps, and optimistic version. `school.tenant_id` is a required foreign key and the `(tenant_id, name)` key is tenant-scoped. No later-domain or speculative fields are added.
+Only `tenant` and `school` tables plus the immediately necessary `audit_record` infrastructure table are introduced. Each business table has a UUID primary key, lifecycle state, trusted creation/update timestamps, and optimistic version. `school.tenant_id` is a required foreign key and the `(tenant_id, name)` key is tenant-scoped. No later-domain or speculative business fields are added. Privileged mutations write a correlation-linked audit record in the same transaction.
 
 The approved documents identify UUID identifiers and lifecycle/version information but do not fix a UUID version, exact display-name constraints, or exact lifecycle URL verbs. These remain explicit implementation assumptions and are recorded in the Phase 13 report; no production policy is claimed.
 
@@ -37,7 +37,7 @@ The product documents role names but not claim serialization. This slice maps `s
 ## Dependencies and execution
 
 - PostgreSQL driver is added only because the authorized slice requires canonical persistence and migration execution.
-- Migrations are plain SQL and run through a small migration runner; no ORM, Redis, or later-domain dependency is introduced.
+- Migrations are plain SQL and run through a small migration runner with checksums and advisory serialization; no ORM, Redis, or later-domain dependency is introduced.
 - Migration verification must run against PostgreSQL in CI and in any available development environment. `NOT_EXECUTED` is not reported as PASS.
 
 ## Stop condition

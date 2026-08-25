@@ -4,6 +4,7 @@ export interface RuntimeConfig {
   readonly environment: RuntimeEnvironment;
   readonly port: number;
   readonly provisionalSigningSecret: string;
+  readonly databaseUrl: string;
 }
 
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
@@ -32,5 +33,9 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
     throw new Error('CONFIGURATION_INVALID');
   }
 
-  return { environment, port, provisionalSigningSecret };
+  const databaseUrl = env.DATABASE_URL;
+  if (!databaseUrl || databaseUrl.trim().length < 1 || !/^postgres(?:ql)?:\/\//.test(databaseUrl)) {
+    throw new Error('CONFIGURATION_INVALID');
+  }
+  return { environment, port, provisionalSigningSecret, databaseUrl };
 }

@@ -21,3 +21,18 @@ CREATE TABLE IF NOT EXISTS school (
 );
 
 CREATE INDEX IF NOT EXISTS school_tenant_status_idx ON school (tenant_id, status, id);
+
+CREATE TABLE IF NOT EXISTS audit_record (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NULL,
+  actor_id TEXT NOT NULL,
+  actor_type TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id UUID NOT NULL,
+  outcome TEXT NOT NULL,
+  correlation_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS audit_record_tenant_time_idx ON audit_record (tenant_id, created_at, id);

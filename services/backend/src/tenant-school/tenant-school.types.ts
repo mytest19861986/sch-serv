@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 export type LifecycleStatus = 'active' | 'suspended' | 'archived';
 
 export interface TenantRecord {
@@ -26,6 +28,6 @@ export function isLifecycleStatus(value: unknown): value is LifecycleStatus {
 }
 
 export function validateName(value: unknown): string {
-  if (typeof value !== 'string' || value.trim().length < 1 || value.trim().length > 200) throw new Error('VALIDATION_ERROR');
+  if (typeof value !== 'string' || value.trim().length < 1 || value.trim().length > 200) throw new BadRequestException();
   return value.trim();
 }

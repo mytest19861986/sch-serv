@@ -13,6 +13,7 @@ describe('authentication foundation integration', () => {
 
   beforeAll(async () => {
     process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars';
+    process.env.DATABASE_URL = 'postgres://localhost/test';
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(CREDENTIAL_VERIFIER)
       .useValue({ verify: async () => null })
