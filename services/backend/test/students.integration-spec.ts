@@ -58,7 +58,12 @@ describe('Students vertical slice integration and security negatives', () => {
     const schoolToken = await token('students-school-bootstrap', ['school-admin'], tenantId);
     const school = await request(app.getHttpServer()).post('/schools').set('Authorization', `Bearer ${schoolToken}`).send({ tenant_id: tenantId, name: 'Students School' }); expect(school.status).toBe(201); schoolId = school.body.id;
     const otherSchool = await request(app.getHttpServer()).post('/schools').set('Authorization', `Bearer ${platformToken}`).send({ tenant_id: otherTenantId, name: 'Other Students School' }); expect(otherSchool.status).toBe(201); otherSchoolId = otherSchool.body.id;
-    platformId = await provisionActor(tenantId, 'super-admin'); adminId = await provisionActor(tenantId, 'school-admin'); operatorId = await provisionActor(tenantId, 'school-operator'); otherAdminId = await provisionActor(otherTenantId, 'school-admin');
+    platformId = await provisionActor(tenantId, 'super-admin');
+    // Keep the platform actor authoritative through the target tenant's archived
+    // lifecycle window by giving it an independent active platform membership.
+    const platformOtherMembership = await pool.query<{ id: string }>('INSERT INTO tenant_membership (id, user_id, tenant_id) VALUES ($1, $2, $3) RETURNING id', [randomUUID(), platformId, otherTenantId]);
+    await pool.query('INSERT INTO role_assignment (id, membership_id, role) VALUES ($1, $2, $3)', [randomUUID(), platformOtherMembership.rows[0]!.id, 'super-admin']);
+    adminId = await provisionActor(tenantId, 'school-admin'); operatorId = await provisionActor(tenantId, 'school-operator'); otherAdminId = await provisionActor(otherTenantId, 'school-admin');
     const migration = await pool.query<{ version: string }>("SELECT version FROM _schema_migrations WHERE version = '004_students'"); expect(migration.rows).toHaveLength(1);
   });
 
