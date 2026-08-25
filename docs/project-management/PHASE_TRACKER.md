@@ -1,6 +1,6 @@
 # Phase Tracker
 
-Current implementation control: Slice 13.07 Vehicles `CLOSED_ACCEPTED`; Slice 13.08 Routes `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` recommended on `phase13/slice-13-08-routes`, Commander closure pending. Merge-to-main, production authentication and deployment remain locked.
+Current implementation control: Slice 13.10 Assignments `IN_PROGRESS` on `phase13/slice-13-10-assignments`. Merge-to-main, production authentication and deployment remain locked.
 
 | Phase | Name | Status |
 |---|---|---|
