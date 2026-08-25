@@ -86,9 +86,10 @@ describe('Users vertical slice integration and security negatives', () => {
     const unauthenticated = await request(app.getHttpServer()).post('/users').send({ email: 'users-unauth@example.test', display_name: 'Nope' }); expect(unauthenticated.status).toBe(401);
     const schoolToken = await token(schoolActorId, ['school-admin'], tenantId);
     const operatorToken = await token(operatorActorId, ['school-operator'], tenantId);
+    const platformToken = await token(platformActorId, ['super-admin'], tenantId);
     expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${operatorToken}`).send({ email: 'users-denied@example.test', display_name: 'Nope' })).status).toBe(403);
-    expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${schoolToken}`).send({ email: 'users-unknown@example.test', display_name: 'Nope', role: 'super-admin' })).status).toBe(400);
-    expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${schoolToken}`).send({ email: 'bad', display_name: 'Nope' })).status).toBe(400);
+    expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${platformToken}`).send({ email: 'users-unknown@example.test', display_name: 'Nope', role: 'super-admin' })).status).toBe(400);
+    expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${platformToken}`).send({ email: 'bad', display_name: 'Nope' })).status).toBe(400);
     expect((await request(app.getHttpServer()).get('/users/not-a-uuid').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
     const foreignToken = await token(otherSchoolActorId, ['school-admin'], otherTenantId);
     const foreignRead = await request(app.getHttpServer()).get(`/users/${userId}`).set('Authorization', `Bearer ${foreignToken}`); expect(foreignRead.status).toBe(404);
