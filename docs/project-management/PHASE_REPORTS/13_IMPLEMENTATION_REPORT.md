@@ -78,7 +78,7 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 
 ## Slice 13.08 Routes Gate Evidence
 
-- Status: `GATE_RECOMMENDED` on dedicated branch `phase13/slice-13-08-routes`, exact SHA `2ef3b9ba5060f1bc0a97e811e3db494ce8e4bef2`, authorized after Vehicles closure.
+- Status: `GATE_RECOMMENDED` on dedicated branch `phase13/slice-13-08-routes`, exact SHA `a1ea5977453eec25bb83c75bbe52675160dc39ba`, authorized after Vehicles closure.
 - Scope: Route aggregate with school/tenant ownership, bounded name identity, active/archive lifecycle, OCC, current DB-backed authority, transactional audit, scoped API and security-negative integration coverage. Route stops, ordered associations, services, assignments and transport events remain out of scope.
 - Validation: local typecheck, lint, build and unit tests pass; CI run `32838811639` is SUCCESS with migration and integration tests green.
 - Exact-SHA external reviews: Gemini `PASS` (Critical=0, High=0); Qwen `PASS (with MEDIUM finding)` (Critical=0, High=0); Claude `APPROVED_WITH_NON_BLOCKING_FINDINGS` (Critical=0, High=0). The mismatched `school_id`/`route_id` regression test requested by Claude was added and confirmed resolved.
