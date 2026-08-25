@@ -23,6 +23,8 @@ export class ApiExceptionFilter implements ExceptionFilter {
     if (status === HttpStatus.UNAUTHORIZED) return 'AUTHENTICATION_REQUIRED';
     if (status === HttpStatus.FORBIDDEN) return 'ACCESS_DENIED';
     if (status === HttpStatus.BAD_REQUEST) return 'VALIDATION_ERROR';
+    if (status === HttpStatus.NOT_FOUND) return 'SAFE_NOT_FOUND';
+    if (status === HttpStatus.CONFLICT) return 'STATE_CONFLICT';
     if (status === HttpStatus.SERVICE_UNAVAILABLE) return 'SERVICE_UNAVAILABLE';
     return 'INTERNAL_ERROR';
   }

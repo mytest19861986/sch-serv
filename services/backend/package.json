@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Phase 13.01 runtime and authentication foundation only.",
+  "description": "Controlled Phase 13 Tenant/School backend vertical slice.",
   "packageManager": "pnpm@11.19.0",
   "engines": { "node": ">=20" },
   "scripts": {
@@ -14,12 +14,14 @@
     "lint": "eslint src test --max-warnings=0",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --config jest.integration.config.cjs"
+    ,"db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.1",
     "@nestjs/core": "^11.2.1",
     "@nestjs/platform-express": "^11.2.1",
     "jose": "^6.2.10",
+    "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -29,6 +31,7 @@
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^10.0.1",
     "jest": "^30.2.0",

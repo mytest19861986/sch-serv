@@ -8,9 +8,13 @@ import { AuthorizationController } from './authz/authz.controller.js';
 import { AuthorizationGuard } from './authz/authorization.guard.js';
 import { AUTHORIZATION_POLICY_EVALUATOR, DefaultDenyAuthorizationPolicyEvaluator } from './authz/authorization.js';
 import { HealthController } from './health/health.controller.js';
+import { TenantSchoolController } from './tenant-school/tenant-school.controller.js';
+import { TenantSchoolRepository, TENANT_SCHOOL_DB } from './tenant-school/tenant-school.repository.js';
+import { TenantSchoolService } from './tenant-school/tenant-school.service.js';
+import { Pool } from 'pg';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController],
   providers: [
     AuthService,
     AuthGuard,
@@ -18,7 +22,10 @@ import { HealthController } from './health/health.controller.js';
     { provide: CREDENTIAL_VERIFIER, useClass: DenyByDefaultCredentialVerifier },
     { provide: SESSION_TOKEN_ISSUER, useClass: ProvisionalHmacSessionTokenIssuer },
     { provide: IDENTITY_STATUS_VERIFIER, useClass: ActiveIdentityStatusVerifier },
-    { provide: AUTHORIZATION_POLICY_EVALUATOR, useClass: DefaultDenyAuthorizationPolicyEvaluator }
+    { provide: AUTHORIZATION_POLICY_EVALUATOR, useClass: DefaultDenyAuthorizationPolicyEvaluator },
+    { provide: TENANT_SCHOOL_DB, useFactory: () => new Pool({ connectionString: process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/school_service' }) },
+    TenantSchoolRepository,
+    TenantSchoolService
   ]
 })
 export class AppModule {}
