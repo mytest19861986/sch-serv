@@ -11,6 +11,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 function studentFromRow(row: StudentRow): StudentRecord { return { id: row.id, tenantId: row.tenant_id, schoolId: row.school_id, displayName: row.display_name, status: row.status, version: row.version, createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString() }; }
 function authorityRevoked(): Error { const error = new Error('AUTHORITY_REVOKED'); Object.assign(error, { code: 'AUTHORITY_REVOKED' }); return error; }
 function schoolLifecycleDenied(): Error { const error = new Error('SCHOOL_LIFECYCLE_DENIED'); Object.assign(error, { code: 'SCHOOL_LIFECYCLE_DENIED' }); return error; }
+function tenantLifecycleDenied(): Error { const error = new Error('TENANT_LIFECYCLE_DENIED'); Object.assign(error, { code: 'TENANT_LIFECYCLE_DENIED' }); return error; }
 
 @Injectable()
 export class StudentsRepository implements OnModuleDestroy {
@@ -30,8 +31,9 @@ export class StudentsRepository implements OnModuleDestroy {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const school = await client.query<{ tenant_id: string; status: string }>('SELECT tenant_id, status FROM school WHERE id = $1 FOR UPDATE', [input.schoolId]);
+      const school = await client.query<{ tenant_id: string; status: string; tenant_status: string }>('SELECT sc.tenant_id, sc.status, t.status AS tenant_status FROM school sc JOIN tenant t ON t.id = sc.tenant_id WHERE sc.id = $1 FOR UPDATE OF sc, t', [input.schoolId]);
       if (!school.rows[0] || school.rows[0].status !== 'active') throw schoolLifecycleDenied();
+      if (school.rows[0].tenant_status !== 'active') throw tenantLifecycleDenied();
       await this.lockActorAuthority(client, context.actorId, school.rows[0].tenant_id, context.requiredRoles ?? ['school-admin', 'super-admin']);
       const result = await client.query<StudentRow>('INSERT INTO student (id, tenant_id, school_id, display_name) VALUES ($1, $2, $3, $4) RETURNING id, tenant_id, school_id, display_name, status, version, created_at, updated_at', [randomUUID(), school.rows[0].tenant_id, input.schoolId, input.displayName]);
       await this.audit(client, context, school.rows[0].tenant_id, result.rows[0]!.id, 'student.create');
@@ -41,17 +43,17 @@ export class StudentsRepository implements OnModuleDestroy {
   }
 
   async list(schoolId: string, tenantId?: string): Promise<StudentRecord[]> {
-    const result = await this.pool.query<StudentRow>('SELECT s.id, s.tenant_id, s.school_id, s.display_name, s.status, s.version, s.created_at, s.updated_at FROM student s JOIN school sc ON sc.id = s.school_id AND sc.tenant_id = s.tenant_id AND sc.status = \'active\' WHERE s.school_id = $1 AND ($2::uuid IS NULL OR s.tenant_id = $2) AND s.status = \'active\' ORDER BY s.id', [schoolId, tenantId ?? null]);
+    const result = await this.pool.query<StudentRow>('SELECT s.id, s.tenant_id, s.school_id, s.display_name, s.status, s.version, s.created_at, s.updated_at FROM student s JOIN school sc ON sc.id = s.school_id AND sc.tenant_id = s.tenant_id AND sc.status = \'active\' JOIN tenant t ON t.id = s.tenant_id AND t.status = \'active\' WHERE s.school_id = $1 AND ($2::uuid IS NULL OR s.tenant_id = $2) AND s.status = \'active\' ORDER BY s.id', [schoolId, tenantId ?? null]);
     return result.rows.map(studentFromRow);
   }
 
-  async getSchoolContext(schoolId: string): Promise<{ tenantId: string; status: string } | null> {
-    const result = await this.pool.query<{ tenant_id: string; status: string }>('SELECT tenant_id, status FROM school WHERE id = $1', [schoolId]);
-    return result.rows[0] ? { tenantId: result.rows[0].tenant_id, status: result.rows[0].status } : null;
+  async getSchoolContext(schoolId: string): Promise<{ tenantId: string; status: string; tenantStatus: string } | null> {
+    const result = await this.pool.query<{ tenant_id: string; status: string; tenant_status: string }>('SELECT sc.tenant_id, sc.status, t.status AS tenant_status FROM school sc JOIN tenant t ON t.id = sc.tenant_id WHERE sc.id = $1', [schoolId]);
+    return result.rows[0] ? { tenantId: result.rows[0].tenant_id, status: result.rows[0].status, tenantStatus: result.rows[0].tenant_status } : null;
   }
 
   async get(id: string, schoolId: string, tenantId?: string): Promise<StudentRecord | null> {
-    const result = await this.pool.query<StudentRow>('SELECT s.id, s.tenant_id, s.school_id, s.display_name, s.status, s.version, s.created_at, s.updated_at FROM student s JOIN school sc ON sc.id = s.school_id AND sc.tenant_id = s.tenant_id AND sc.status = \'active\' WHERE s.id = $1 AND s.school_id = $2 AND ($3::uuid IS NULL OR s.tenant_id = $3) AND s.status = \'active\'', [id, schoolId, tenantId ?? null]);
+    const result = await this.pool.query<StudentRow>('SELECT s.id, s.tenant_id, s.school_id, s.display_name, s.status, s.version, s.created_at, s.updated_at FROM student s JOIN school sc ON sc.id = s.school_id AND sc.tenant_id = s.tenant_id AND sc.status = \'active\' JOIN tenant t ON t.id = s.tenant_id AND t.status = \'active\' WHERE s.id = $1 AND s.school_id = $2 AND ($3::uuid IS NULL OR s.tenant_id = $3) AND s.status = \'active\'', [id, schoolId, tenantId ?? null]);
     return result.rows[0] ? studentFromRow(result.rows[0]) : null;
   }
 
@@ -61,8 +63,9 @@ export class StudentsRepository implements OnModuleDestroy {
       await client.query('BEGIN');
       const current = await client.query<{ tenant_id: string; status: StudentStatus }>('SELECT tenant_id, status FROM student WHERE id = $1 AND school_id = $2 FOR UPDATE', [id, schoolId]);
       if (!current.rows[0]) { await client.query('ROLLBACK'); return null; }
-      const school = await client.query<{ status: string }>('SELECT status FROM school WHERE id = $1 FOR UPDATE', [schoolId]);
+      const school = await client.query<{ status: string; tenant_status: string }>('SELECT sc.status, t.status AS tenant_status FROM school sc JOIN tenant t ON t.id = sc.tenant_id WHERE sc.id = $1 FOR UPDATE OF sc, t', [schoolId]);
       if (!school.rows[0] || school.rows[0].status !== 'active') throw schoolLifecycleDenied();
+      if (school.rows[0].tenant_status !== 'active') throw tenantLifecycleDenied();
       await this.lockActorAuthority(client, context.actorId, current.rows[0].tenant_id, context.requiredRoles ?? ['school-admin', 'super-admin']);
       const result = await client.query<StudentRow>('UPDATE student SET display_name = COALESCE($3, display_name), status = COALESCE($4, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND school_id = $2 AND version = $5 RETURNING id, tenant_id, school_id, display_name, status, version, created_at, updated_at', [id, schoolId, input.displayName ?? null, input.status ?? null, input.version]);
       if (!result.rows[0]) { await client.query('ROLLBACK'); return null; }
