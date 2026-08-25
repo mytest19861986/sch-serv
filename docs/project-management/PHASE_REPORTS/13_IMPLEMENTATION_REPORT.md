@@ -41,3 +41,13 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - Specialist verdicts: Architecture PASS; Backend/API PASS; DB/Security/QA PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS. Gate recommendation: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 - Known assumptions: role claim strings (`super-admin`, `school-admin`), UUID generation/version, and lifecycle PATCH representation are explicitly documented in `13_02_TENANT_SCHOOL.md` and remain pre-production policy decisions.
 - Merge to `main`, production authentication, deployment, and Slice 13.03 remain locked.
+
+## Slice 13.03 — Users Gate Decision
+
+- Status: `CLOSED_ACCEPTED` on dedicated branch `phase13/slice-13-03-users`, exact SHA `5dd5c31ff299a2e6235734a039a1e3ae7e97b7cd`.
+- Gate: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`; Commander decision recorded with Quality `GREEN`, Critical `0`, High `0`, Blockers `0`.
+- CI evidence: run `32821493864` passed documentation, frozen install, typecheck, lint, build, database migration, unit, and integration jobs; `git show --check` clean and no migration changes.
+- Specialist evidence: Architecture `PASS_WITH_RECORDED_MEDIUMS`; API `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`; DB/Security/QA `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`.
+- Closed findings: shared DB-backed authority, JWT role non-authority, revocation, Super Admin platform-wide policy, mutation-time authority linearization, required-role downgrade race, active-user membership lifecycle race, and target-tenant role-create TOCTOU.
+- Open non-blocking mediums are registered in `RISK_REGISTER.md`: provisional/bootstrap identity containment, durable denial telemetry, separate PostgreSQL pools, API hardening/test evidence, and explicit Super Admin/delegation documentation.
+- Governance controls: merge to `main`, production authentication enablement, deployment, and Slice 13.04 remain locked pending separate authorization.

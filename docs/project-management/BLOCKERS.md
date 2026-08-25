@@ -10,7 +10,13 @@
 
 - Current Gate: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` recommended for Slice 13.02 on `ceb0668`; CI `32814010048` and specialist re-reviews are green. Rejected-attempt audit and production auth remain future gates.
 - Local PostgreSQL is unavailable, so local migration/integration is not PASS; CI is the authoritative executed database evidence.
-- Production role/membership serialization, production authentication lifecycle, deployment, merge-to-main, and Slice 13.03 remain blocked by governance and approved scope.
+- Production role/membership serialization, production authentication lifecycle, deployment, merge-to-main, and Slice 13.04 remain blocked by governance and approved scope.
+
+## Phase 13.03 Users
+
+- Gate: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`; status `CLOSED_ACCEPTED` on `5dd5c31`; CI `32821493864` passed the full validation matrix.
+- Critical findings: 0. High findings: 0. Blockers: 0. Remaining mediums are tracked in `RISK_REGISTER.md` and do not block this slice.
+- Production authentication, deployment, merge-to-main, and Slice 13.04 remain locked pending separate Governance authorization.
 
 ## Current
 

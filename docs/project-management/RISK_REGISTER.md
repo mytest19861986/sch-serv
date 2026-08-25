@@ -18,6 +18,16 @@
 | R-13-02-03 | Local environment lacks PostgreSQL | Medium | CI provisions immutable PostgreSQL image and executes migration/integration evidence; local NOT_EXECUTED remains explicit | Non-blocking for CI Gate, limits local reproduction |
 | R-13-02-04 | Rejected authorization attempts are not durably audited | Medium | Accepted mutations are transactionally audited; add privacy-safe denial telemetry before sensitive domains/production | Non-blocking open question for Slice 13.02 |
 
+## Phase 13.03 Users
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-13-03-01 | Non-UUID provisional/bootstrap identities could bypass DB-backed authority if enabled in production | Medium | Restrict to test/bootstrap flows and fail closed for production authentication | Non-blocking for accepted slice; blocks production auth |
+| R-13-03-02 | Denied or foreign authorization attempts lack durable security audit signals | Medium | Preserve privacy-safe denial telemetry/audit as a follow-up before sensitive-domain or production release | Non-blocking follow-up |
+| R-13-03-03 | Users and Tenant/School use separate PostgreSQL pools | Medium | Track shared-boundary/configuration convergence as operational debt | Non-blocking follow-up |
+| R-13-03-04 | API pagination, multi-membership representation, 409 contract, and race-test evidence need hardening | Medium | Carry into the appropriate API/QA backlog before expansion | Non-blocking follow-up |
+| R-13-03-05 | Super Admin cross-tenant and delegation semantics need explicit documentation | Medium | Record ADR/backlog clarification; preserve current platform-wide policy | Non-blocking follow-up |
+
 ## Phase 12
 
 | ID | Risk | Severity | Mitigation/Disposition | Gate relevance |

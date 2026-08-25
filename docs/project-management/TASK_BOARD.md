@@ -15,8 +15,9 @@
 ## In Progress
 
 - Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; CLOSED_ACCEPTED by Commander.
-- Phase 13 Slice 13.02: Tenant / School; implementation checkpoint complete, specialist reviews pending.
+- Phase 13 Slice 13.02: Tenant / School; CLOSED_ACCEPTED by Commander.
+- Phase 13 Slice 13.03: Users; CLOSED_ACCEPTED by Commander with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 
 ## Next
 
-- Complete Slice 13.02 specialist reviews and Gate report; keep production auth, deployment, and merge-to-main governance locked.
+- Preserve Slice 13.03 non-blocking mediums in the risk register/backlog; await separate Governance authorization before Slice 13.04. Keep production auth, deployment, and merge-to-main locked.

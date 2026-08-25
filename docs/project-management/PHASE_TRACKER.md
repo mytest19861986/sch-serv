@@ -16,5 +16,5 @@
 | 10 | Security Design | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
 | 11 | Technical Specification | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
 | 12 | Repository Setup | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (94/100 GREEN) |
-| 13 | Implementation | Slice 13.01 CLOSED_ACCEPTED (PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS); Slice 13.02 Tenant / School AUTHORIZED |
+| 13 | Implementation | Slice 13.01 CLOSED_ACCEPTED; Slice 13.02 CLOSED_ACCEPTED; Slice 13.03 Users CLOSED_ACCEPTED (PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS; Critical/High/Blockers = 0) |
 | 14–18 | Test, Security, Performance, Deployment, Documentation | Pending authorization |
