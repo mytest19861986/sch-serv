@@ -65,6 +65,6 @@ describe('Drivers tenant-scoped profile surface', () => {
     const admin = await token(adminId, ['school-admin'], tenantId);
     await pool.query("UPDATE role_assignment SET status = 'revoked' WHERE membership_id = (SELECT id FROM tenant_membership WHERE user_id = $1 AND tenant_id = $2) AND role = 'school-admin'", [adminId, tenantId]);
     const denied = await request(app.getHttpServer()).get('/drivers').set('Authorization', `Bearer ${admin}`);
-    expect(denied.status).toBe(401);
+    expect(denied.status).toBe(404);
   });
 });

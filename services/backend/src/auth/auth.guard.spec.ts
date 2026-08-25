@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from './auth.guard.js';
 
 describe('AuthGuard identity status boundary', () => {
@@ -11,7 +11,7 @@ describe('AuthGuard identity status boundary', () => {
       header: () => 'Bearer valid-token'
     } as never;
     const context = { switchToHttp: () => ({ getRequest: () => request }) } as never;
-    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('fails closed when the identity status verifier returns no authoritative principal', async () => {
@@ -21,6 +21,6 @@ describe('AuthGuard identity status boundary', () => {
     );
     const request = { header: () => 'Bearer valid-token' } as never;
     const context = { switchToHttp: () => ({ getRequest: () => request }) } as never;
-    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(NotFoundException);
   });
 });

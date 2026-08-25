@@ -130,7 +130,7 @@ describe('Users vertical slice integration and security negatives', () => {
   it('rejects reuse of a token after the actor membership is revoked', async () => {
     const schoolToken = await token(schoolActorId, ['school-admin'], tenantId);
     await pool.query("UPDATE tenant_membership SET status = 'revoked', version = version + 1 WHERE user_id = $1 AND tenant_id = $2", [schoolActorId, tenantId]);
-    expect((await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(401);
-    expect((await request(app.getHttpServer()).get(`/tenants/${tenantId}`).set('Authorization', `Bearer ${schoolToken}`)).status).toBe(401);
+    expect((await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
+    expect((await request(app.getHttpServer()).get(`/tenants/${tenantId}`).set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
   });
 });

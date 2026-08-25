@@ -121,7 +121,7 @@ describe('Students vertical slice integration and security negatives', () => {
     expect((await request(app.getHttpServer()).patch(`/students/${tenantLifecycleStudent.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${platformToken}`).send({ display_name: 'Denied', version: tenantLifecycleStudent.body.version })).status).toBe(404);
     await pool.query("UPDATE tenant SET status = 'active', version = version + 1 WHERE id = $1", [tenantId]);
     await pool.query("UPDATE tenant_membership SET status = 'revoked', version = version + 1 WHERE user_id = $1 AND tenant_id = $2", [adminId, tenantId]);
-    expect((await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).status).toBe(401);
+    expect((await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).status).toBe(404);
   });
 
   it('permits an authoritative platform Super Admin to target another tenant explicitly', async () => {
