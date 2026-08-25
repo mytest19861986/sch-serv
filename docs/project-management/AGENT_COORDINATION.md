@@ -13,3 +13,10 @@
 
 No specialist agent may bypass the project gate or authorize implementation independently.
 
+## Governance Rule GOV-001 — Autonomous Phase Progression
+
+The Commander evaluates a passing Gate, closes it, unlocks and authorizes the
+next phase, and issues its complete task without waiting for a separate Manager
+approval. The Manager's explicit hold/stop, a material external-governance
+change, production-impacting irreversible action, cost/legal commitment, or an
+unresolved fundamental business requirement remains an escalation boundary.
