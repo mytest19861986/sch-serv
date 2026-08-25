@@ -6,7 +6,7 @@ import { AppModule } from '../src/app.module.js';
 import { AuthService } from '../src/auth/auth.service.js';
 import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
 import { correlationMiddleware } from '../src/common/correlation.js';
-import { CREDENTIAL_VERIFIER, IDENTITY_STATUS_VERIFIER } from '../src/auth/auth.types.js';
+import { CREDENTIAL_VERIFIER } from '../src/auth/auth.types.js';
 import { runMigrations } from '../src/db/migrate.js';
 
 describe('Tenant/School vertical slice integration and security negatives', () => {
@@ -40,7 +40,6 @@ describe('Tenant/School vertical slice integration and security negatives', () =
     await pool.query('DELETE FROM tenant');
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(CREDENTIAL_VERIFIER).useValue({ verify: async () => null })
-      .overrideProvider(IDENTITY_STATUS_VERIFIER).useValue({ assertActive: async () => undefined })
       .compile();
     app = module.createNestApplication();
     app.use(correlationMiddleware);

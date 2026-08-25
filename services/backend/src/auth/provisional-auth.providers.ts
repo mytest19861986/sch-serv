@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SignJWT, jwtVerify } from 'jose';
 import type { AuthenticatedPrincipal, CredentialVerifier, IdentityStatusVerifier, SessionTokenIssuer } from './auth.types.js';
+import { UsersRepository } from '../users/users.repository.js';
 
 @Injectable()
 export class DenyByDefaultCredentialVerifier implements CredentialVerifier {
@@ -13,9 +14,14 @@ export class DenyByDefaultCredentialVerifier implements CredentialVerifier {
 
 @Injectable()
 export class ActiveIdentityStatusVerifier implements IdentityStatusVerifier {
-  async assertActive(principal: AuthenticatedPrincipal): Promise<void> {
-    void principal;
-    // Persistence-backed revocation/disablement is deliberately deferred; the hook is enforced by AuthGuard now.
+  constructor(private readonly usersRepository: UsersRepository) {}
+
+  async assertActive(principal: AuthenticatedPrincipal): Promise<AuthenticatedPrincipal | void> {
+    // Provisional non-UUID subjects are retained for bootstrap/test-only flows.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(principal.subject)) return;
+    const authorities = await this.usersRepository.getActorAuthorities(principal.subject, principal.tenantId);
+    if (!authorities.length) throw new UnauthorizedException();
+    return { ...principal, roles: [...new Set(authorities.map((authority) => authority.role))] };
   }
 }
 

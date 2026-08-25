@@ -14,7 +14,7 @@ export interface SessionTokenIssuer {
 }
 
 export interface IdentityStatusVerifier {
-  assertActive(principal: AuthenticatedPrincipal): Promise<void>;
+  assertActive(principal: AuthenticatedPrincipal): Promise<AuthenticatedPrincipal | void>;
 }
 
 export const CREDENTIAL_VERIFIER = Symbol('CREDENTIAL_VERIFIER');

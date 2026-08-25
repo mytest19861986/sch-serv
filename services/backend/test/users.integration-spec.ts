@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { AuthService } from '../src/auth/auth.service.js';
-import { CREDENTIAL_VERIFIER, IDENTITY_STATUS_VERIFIER } from '../src/auth/auth.types.js';
+import { CREDENTIAL_VERIFIER } from '../src/auth/auth.types.js';
 import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
 import { correlationMiddleware } from '../src/common/correlation.js';
 
@@ -39,7 +39,6 @@ describe('Users vertical slice integration and security negatives', () => {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(CREDENTIAL_VERIFIER).useValue({ verify: async () => null })
-      .overrideProvider(IDENTITY_STATUS_VERIFIER).useValue({ assertActive: async () => undefined })
       .compile();
     app = module.createNestApplication(); app.use(correlationMiddleware); app.useGlobalFilters(new ApiExceptionFilter()); await app.init(); authService = app.get(AuthService);
     tenantId = await postTenant(`Users Tenant ${Date.now()}`);
@@ -114,6 +113,7 @@ describe('Users vertical slice integration and security negatives', () => {
   it('rejects reuse of a token after the actor membership is revoked', async () => {
     const schoolToken = await token(schoolActorId, ['school-admin'], tenantId);
     await pool.query("UPDATE tenant_membership SET status = 'revoked', version = version + 1 WHERE user_id = $1 AND tenant_id = $2", [schoolActorId, tenantId]);
-    expect((await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(403);
+    expect((await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(401);
+    expect((await request(app.getHttpServer()).get(`/tenants/${tenantId}`).set('Authorization', `Bearer ${schoolToken}`)).status).toBe(401);
   });
 });
