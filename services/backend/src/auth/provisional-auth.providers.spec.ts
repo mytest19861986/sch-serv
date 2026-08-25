@@ -1,5 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { ProvisionalHmacSessionTokenIssuer } from './provisional-auth.providers.js';
+import { DenyByDefaultCredentialVerifier, ProvisionalHmacSessionTokenIssuer } from './provisional-auth.providers.js';
 
 describe('ProvisionalHmacSessionTokenIssuer', () => {
   beforeEach(() => { process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars'; });
@@ -13,5 +13,11 @@ describe('ProvisionalHmacSessionTokenIssuer', () => {
   it('rejects a manipulated token', async () => {
     const issuer = new ProvisionalHmacSessionTokenIssuer();
     await expect(issuer.verify('not-a-token')).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+});
+
+describe('DenyByDefaultCredentialVerifier', () => {
+  it('rejects credentials by default', async () => {
+    await expect(new DenyByDefaultCredentialVerifier().verify('user', 'password')).resolves.toBeNull();
   });
 });

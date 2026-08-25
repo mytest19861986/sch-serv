@@ -8,6 +8,11 @@ export interface RuntimeConfig {
 
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
   const environment = env.APP_ENV ?? 'development';
+  // A deployment process marked production must never silently fall back to
+  // development when APP_ENV is missing or contradictory.
+  if (env.NODE_ENV === 'production' && environment !== 'production') {
+    throw new Error('PROVISIONAL_AUTH_NOT_ALLOWED_IN_PRODUCTION');
+  }
   if (environment !== 'development' && environment !== 'test' && environment !== 'production') {
     throw new Error('CONFIGURATION_INVALID');
   }

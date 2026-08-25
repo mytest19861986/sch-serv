@@ -61,7 +61,10 @@ describe('authentication foundation integration', () => {
 
   it('rejects a tampered server-issued token without leaking token details', async () => {
     const token = await authService.issueForTestOnly({ subject: 'user-3', roles: ['foundation-user'] });
-    const tampered = `${token.slice(0, -1)}${token.endsWith('a') ? 'b' : 'a'}`;
+    const parts = token.split('.');
+    const signature = parts[2] ?? '';
+    const replacement = signature.startsWith('a') ? 'b' : 'a';
+    const tampered = `${parts[0]}.${parts[1]}.${replacement}${signature.slice(1)}`;
     const response = await request(app.getHttpServer())
       .get('/authz/context')
       .set('Authorization', `Bearer ${tampered}`);
