@@ -16,7 +16,7 @@
 | R-13-02-01 | Final role-claim/membership serialization is not yet approved | High | Centralized provisional mapping; deny-by-default and no production claim | Blocks production identity/membership release |
 | R-13-02-02 | Tenant/School lifecycle URL/method and exact field policy are underspecified in API source | Medium | Minimal documented resource methods implemented; assumptions explicitly recorded; no extra endpoints | Requires product/API decision before expansion |
 | R-13-02-03 | Local environment lacks PostgreSQL | Medium | CI provisions immutable PostgreSQL image and executes migration/integration evidence; local NOT_EXECUTED remains explicit | Non-blocking for CI Gate, limits local reproduction |
-| R-13-02-04 | Specialist re-review of migration-upgrade evidence is pending | High | API review found pre-run 002 artifacts; fixture now removes them before migration; CI re-run and re-review required | Current Slice 13.02 Gate blocker |
+| R-13-02-04 | Rejected authorization attempts are not durably audited | Medium | Accepted mutations are transactionally audited; add privacy-safe denial telemetry before sensitive domains/production | Non-blocking open question for Slice 13.02 |
 
 ## Phase 12
 

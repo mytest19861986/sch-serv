@@ -8,7 +8,7 @@
 
 ## Phase 13.02 Tenant / School
 
-- Current Gate: `IMPROVEMENT_REQUIRED` pending CI/re-review of isolated migration-upgrade fixture; API review found pre-run 002 artifacts must be removed before exercising 001→002.
+- Current Gate: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` recommended for Slice 13.02 on `ceb0668`; CI `32814010048` and specialist re-reviews are green. Rejected-attempt audit and production auth remain future gates.
 - Local PostgreSQL is unavailable, so local migration/integration is not PASS; CI is the authoritative executed database evidence.
 - Production role/membership serialization, production authentication lifecycle, deployment, merge-to-main, and Slice 13.03 remain blocked by governance and approved scope.
 

@@ -21,10 +21,10 @@ Critical findings: 0. Required tests: 0 failures in current CI. Backend and Arch
 
 | Area | Result |
 |---|---|
-| Scope and architecture | Remediated implementation limited to Tenant/School and migration/audit infrastructure; latest specialist re-review pending corrected upgrade-fixture CI |
+| Scope and architecture | Remediated implementation limited to Tenant/School and migration/audit infrastructure; Architecture re-review PASS |
 | Schema and migration | Green in CI; PostgreSQL migration/audit/checksum applied and recorded |
 | Authorization/security | Green evidence for scoped predicates, active lifecycle, wrong-role, cross-tenant, substitution, safe-not-found, and audit-linked writes; specialist re-review pending |
 | API/backend | Green validation/error mapping, typecheck/lint/build and integration evidence; specialist re-review pending |
-| QA/DevOps | Green CI run `32813378894` with immutable PostgreSQL image; local DB validation unavailable and explicitly not counted as PASS |
+| QA/DevOps | Green CI run `32814010048` with immutable PostgreSQL image; local DB validation unavailable and explicitly not counted as PASS |
 
-Current Slice 13.02 Gate recommendation: `IMPROVEMENT_REQUIRED` pending required specialist re-reviews after corrected migration-upgrade fixture. No production-readiness claim is made.
+Current Slice 13.02 Gate recommendation: `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS`. No production-readiness claim is made; rejected-attempt audit and production auth remain deferred.
