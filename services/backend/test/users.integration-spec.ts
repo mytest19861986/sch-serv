@@ -28,8 +28,8 @@ describe('Users vertical slice integration and security negatives', () => {
   async function provisionActor(tenant: string, role: string): Promise<string> {
     const id = randomUUID();
     await pool.query('INSERT INTO "user" (id, email, display_name) VALUES ($1, $2, $3)', [id, `actor-${id}@example.test`, role]);
-    const membership = await pool.query<{ id: string }>('INSERT INTO tenant_membership (user_id, tenant_id) VALUES ($1, $2) RETURNING id', [id, tenant]);
-    await pool.query('INSERT INTO role_assignment (membership_id, role) VALUES ($1, $2)', [membership.rows[0]!.id, role]);
+    const membership = await pool.query<{ id: string }>('INSERT INTO tenant_membership (id, user_id, tenant_id) VALUES ($1, $2, $3) RETURNING id', [randomUUID(), id, tenant]);
+    await pool.query('INSERT INTO role_assignment (id, membership_id, role) VALUES ($1, $2, $3)', [randomUUID(), membership.rows[0]!.id, role]);
     return id;
   }
 
