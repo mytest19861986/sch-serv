@@ -6,6 +6,12 @@
 - Slice 13.01 Gate is closed accepted; the provisional token lifecycle remains a production gate, not a blocker for the accepted foundation slice.
 - Production authentication, identity persistence, session/device lifecycle, deployment, and merge-to-main remain blocked. Slice 13.02 is authorized but must begin as an independently scoped task.
 
+## Phase 13.02 Tenant / School
+
+- Current Gate: `IMPROVEMENT_REQUIRED` pending specialist reviews; CI execution blocker is resolved on run `32812214631`.
+- Local PostgreSQL is unavailable, so local migration/integration is not PASS; CI is the authoritative executed database evidence.
+- Production role/membership serialization, production authentication lifecycle, deployment, merge-to-main, and Slice 13.03 remain blocked by governance and approved scope.
+
 ## Current
 
 No product blocker for Discovery Gate.

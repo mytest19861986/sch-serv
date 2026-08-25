@@ -6,6 +6,9 @@
 - IMP-ADR-13-02 Authentication and authorization derive tenant context from the verified server token; client-supplied tenant headers are non-authoritative.
 - IMP-ADR-13-03 No identity/business persistence schema or migration is introduced in Slice 13.01; persistence-backed identity status is an explicit provider boundary.
 - IMP-ADR-13-04 CI validation is read-only and deployment-free; workflow actions are pinned and permissions are limited to repository contents read.
+- IMP-ADR-13-05 Slice 13.02 uses plain PostgreSQL SQL migration and `pg` persistence only; ORM/Redis and future-domain tables are not introduced.
+- IMP-ADR-13-06 Tenant/School authorization maps the currently available provisional principal role claims `super-admin` and `school-admin` centrally; final membership/claim serialization remains a pre-production decision.
+- IMP-ADR-13-07 Tenant/School updates require a server-checked version and return a safe conflict; client tenant identifiers never establish authority.
 
 ## Candidate ADRs from Discovery
 

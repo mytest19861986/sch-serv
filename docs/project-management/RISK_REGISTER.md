@@ -9,6 +9,14 @@
 | R-13-03 | Runtime logger/readiness semantics are foundation-level and not operationally complete | Medium | Findings are recorded for Backend/Security re-review; no production observability/SLO claim | Non-blocking for foundation Gate, blocking for production readiness |
 | R-13-04 | Live branch protection and repository Actions policy remain external governance decisions | Medium | No live policy mutation performed; Phase 12 decision preserved | Must resolve before implementation governance sign-off |
 
+## Phase 13.02
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-13-02-01 | Final role-claim/membership serialization is not yet approved | High | Centralized provisional mapping; deny-by-default and no production claim | Blocks production identity/membership release |
+| R-13-02-02 | Tenant/School lifecycle URL/method and exact field policy are underspecified in API source | Medium | Minimal documented resource methods implemented; assumptions explicitly recorded; no extra endpoints | Requires product/API decision before expansion |
+| R-13-02-03 | Local environment lacks PostgreSQL | Medium | CI provisions PostgreSQL 16 and executes migration/integration evidence; local NOT_EXECUTED remains explicit | Non-blocking for CI Gate, limits local reproduction |
+
 ## Phase 12
 
 | ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
