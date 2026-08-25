@@ -20,10 +20,13 @@ CREATE TABLE IF NOT EXISTS student_guardian_relationship (
   version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT relationship_unique UNIQUE (student_id, guardian_id)
+  CONSTRAINT relationship_unique UNIQUE (id)
 );
 CREATE INDEX IF NOT EXISTS relationship_guardian_status_idx ON student_guardian_relationship (guardian_id, status, student_id);
 CREATE INDEX IF NOT EXISTS relationship_student_status_idx ON student_guardian_relationship (student_id, status, guardian_id);
+DROP INDEX IF EXISTS relationship_active_unique_idx;
+ALTER TABLE student_guardian_relationship DROP CONSTRAINT IF EXISTS relationship_unique;
+CREATE UNIQUE INDEX relationship_active_unique_idx ON student_guardian_relationship (student_id, guardian_id) WHERE status = 'active';
 CREATE UNIQUE INDEX IF NOT EXISTS student_id_tenant_unique_idx ON student (id, tenant_id);
 CREATE UNIQUE INDEX IF NOT EXISTS guardian_school_tenant_unique_idx ON school (id, tenant_id);
 ALTER TABLE student_guardian_relationship DROP CONSTRAINT IF EXISTS relationship_school_tenant_match;
