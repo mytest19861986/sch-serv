@@ -35,6 +35,21 @@ TBD after receipt of the complete Commander task. No application/runtime file ha
 
 No dependency is approved or installed in this pre-change report. The approved direction identifies a NestJS/TypeScript backend and PostgreSQL, but exact package choices and versions require the complete Slice 13.01 task and dependency review.
 
+## Test plan
+
+- Validate any new runtime's startup and configuration failure behavior without real credentials.
+- Add focused tests for the approved authentication, authorization, error-envelope, and correlation behavior only after the Commander supplies the exact permitted behavior.
+- Run static/type/lint/test commands introduced by the selected approved toolchain, plus the existing Foundation Validation workflow equivalent.
+- Do not claim PostgreSQL, migration, integration, or security-effectiveness coverage until those artifacts and test fixtures are explicitly authorized and executed.
+
+## Security impact
+
+The first protected boundary must fail closed, derive rather than trust tenant/resource scope, avoid credentials and session material in logs/source control, expose privacy-safe errors, and attach a safe correlation identity. The unselected credential/session mechanism is an explicit implementation risk; no token algorithm, secret, account data, or bypass is permitted by this plan.
+
+## Rollback approach
+
+All implementation commits will be isolated on `phase13/foundation-auth` and pushed without merging to `main`. Reverting a coherent implementation commit is the rollback mechanism. No migration, environment secret, production deployment, or irreversible external change is planned in this pre-change step.
+
 ## Risks
 
 - The credential/session mechanism is explicitly unresolved in approved specifications; it must not be invented.
