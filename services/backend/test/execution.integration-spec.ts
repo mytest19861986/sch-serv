@@ -9,12 +9,13 @@ import { CREDENTIAL_VERIFIER } from '../src/auth/auth.types.js';
 import { ApiExceptionFilter } from '../src/common/api-exception.filter.js';
 import { correlationMiddleware } from '../src/common/correlation.js';
 import { runMigrations } from '../src/db/migrate.js';
+import { SignJWT } from 'jose';
 
 describe('Slice 13.11 Driver Service Execution security boundary', () => {
   let app: INestApplication; let pool: Pool; let auth: AuthService;
   let tenantId: string; let otherTenantId: string; let schoolId: string; let otherSchoolId: string;
   let driverUserId: string; let otherDriverUserId: string; let driverProfileId: string; let otherDriverProfileId: string;
-  let serviceInstanceId: string; let pendingInstanceId: string; let otherInstanceId: string; let studentId: string; let archivedStudentId: string; let serviceId: string; let routeId: string; let bootstrapTenantId: string; let bootstrapId: string;
+  let serviceInstanceId: string; let pendingInstanceId: string; let parityPreStartInstanceId: string; let otherInstanceId: string; let sameTenantForeignSchoolInstanceId: string; let revokedAssignmentInstanceId: string; let inactiveLifecycleInstanceId: string; let sameTenantOtherDriverProfileId: string; let sameTenantForeignSchoolId: string; let studentId: string; let archivedStudentId: string; let serviceId: string; let routeId: string; let bootstrapTenantId: string; let bootstrapId: string;
 
   async function token(subject: string, roles: string[], tenant?: string): Promise<string> { return auth.issueForTestOnly({ subject, roles, tenantId: tenant }); }
   async function actor(role: string, tenant: string, marker = 'execution'): Promise<string> {
@@ -45,11 +46,15 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     otherTenantId = (await request(app.getHttpServer()).post('/tenants').set('Authorization', `Bearer ${bootstrap}`).send({ name: `Other Execution Tenant ${Date.now()}` })).body.id;
     schoolId = randomUUID(); otherSchoolId = randomUUID(); await pool.query('INSERT INTO school (id,tenant_id,name) VALUES ($1,$2,$3),($4,$5,$6)', [schoolId, tenantId, 'Execution School', otherSchoolId, otherTenantId, 'Other Execution School']);
     driverUserId = await actor('driver', tenantId); otherDriverUserId = await actor('driver', otherTenantId);
-    driverProfileId = randomUUID(); otherDriverProfileId = randomUUID(); await pool.query('INSERT INTO driver_profile(id,tenant_id,user_id) VALUES($1,$2,$3),($4,$5,$6)', [driverProfileId, tenantId, driverUserId, otherDriverProfileId, otherTenantId, otherDriverUserId]);
+    driverProfileId = randomUUID(); otherDriverProfileId = randomUUID(); const sameTenantOtherDriverUserId = await actor('driver', tenantId, 'execution-other-school'); sameTenantOtherDriverProfileId = randomUUID(); await pool.query('INSERT INTO driver_profile(id,tenant_id,user_id) VALUES($1,$2,$3),($4,$5,$6),($7,$8,$9)', [driverProfileId, tenantId, driverUserId, otherDriverProfileId, otherTenantId, otherDriverUserId, sameTenantOtherDriverProfileId, tenantId, sameTenantOtherDriverUserId]);
     routeId = randomUUID(); serviceId = randomUUID(); await pool.query('INSERT INTO route(id,tenant_id,school_id,name) VALUES($1,$2,$3,$4)', [routeId, tenantId, schoolId, 'Execution Route']); await pool.query('INSERT INTO transport_service(id,tenant_id,school_id,route_id,name) VALUES($1,$2,$3,$4,$5)', [serviceId, tenantId, schoolId, routeId, 'Execution Service']);
     serviceInstanceId = randomUUID(); await fixture(serviceInstanceId, tenantId, schoolId, serviceId, driverProfileId);
     pendingInstanceId = randomUUID(); await fixture(pendingInstanceId, tenantId, schoolId, serviceId, driverProfileId, 1);
+    parityPreStartInstanceId = randomUUID(); await fixture(parityPreStartInstanceId, tenantId, schoolId, serviceId, driverProfileId, 4);
     otherInstanceId = randomUUID(); const otherRoute = randomUUID(); const otherService = randomUUID(); await pool.query('INSERT INTO route(id,tenant_id,school_id,name) VALUES($1,$2,$3,$4)', [otherRoute, otherTenantId, otherSchoolId, 'Other Route']); await pool.query('INSERT INTO transport_service(id,tenant_id,school_id,route_id,name) VALUES($1,$2,$3,$4,$5)', [otherService, otherTenantId, otherSchoolId, otherRoute, 'Other Service']); await fixture(otherInstanceId, otherTenantId, otherSchoolId, otherService, otherDriverProfileId);
+    sameTenantForeignSchoolId = randomUUID(); const sameTenantForeignRoute = randomUUID(); const sameTenantForeignService = randomUUID(); await pool.query('INSERT INTO school (id,tenant_id,name) VALUES ($1,$2,$3)', [sameTenantForeignSchoolId, tenantId, 'Execution Foreign School']); await pool.query('INSERT INTO route(id,tenant_id,school_id,name) VALUES($1,$2,$3,$4)', [sameTenantForeignRoute, tenantId, sameTenantForeignSchoolId, 'Foreign School Route']); await pool.query('INSERT INTO transport_service(id,tenant_id,school_id,route_id,name) VALUES($1,$2,$3,$4,$5)', [sameTenantForeignService, tenantId, sameTenantForeignSchoolId, sameTenantForeignRoute, 'Foreign School Service']); sameTenantForeignSchoolInstanceId = randomUUID(); await fixture(sameTenantForeignSchoolInstanceId, tenantId, sameTenantForeignSchoolId, sameTenantForeignService, sameTenantOtherDriverProfileId);
+    revokedAssignmentInstanceId = randomUUID(); await fixture(revokedAssignmentInstanceId, tenantId, schoolId, serviceId, driverProfileId, 2); const revoked = await pool.query<{ id: string }>('SELECT id FROM driver_service_assignment WHERE service_instance_id=$1', [revokedAssignmentInstanceId]); await pool.query("UPDATE driver_service_assignment SET status='revoked' WHERE id=$1", [revoked.rows[0]!.id]);
+    inactiveLifecycleInstanceId = randomUUID(); await fixture(inactiveLifecycleInstanceId, tenantId, schoolId, serviceId, driverProfileId, 3); await pool.query("UPDATE service_instance SET status='archived' WHERE id=$1", [inactiveLifecycleInstanceId]);
     studentId = randomUUID(); archivedStudentId = randomUUID(); await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4),($5,$6,$7,$8)', [studentId, tenantId, schoolId, 'Active Student', archivedStudentId, tenantId, schoolId, 'Archived Student']); await pool.query("UPDATE student SET status='archived' WHERE id=$1", [archivedStudentId]); await pool.query('INSERT INTO student_service_assignment(id,tenant_id,school_id,service_instance_id,student_id) VALUES($1,$2,$3,$4,$5),($6,$2,$3,$4,$7)', [randomUUID(), tenantId, schoolId, serviceInstanceId, studentId, randomUUID(), archivedStudentId]);
   });
 
@@ -74,5 +79,34 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const rosterStillBefore = await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${driver}`); expect(rosterStillBefore.status).toBe(404);
     const started = await request(app.getHttpServer()).post(`/driver/services/${pendingInstanceId}/start`).set('Authorization', `Bearer ${driver}`).send({ expectedVersion: 1 }); expect(started.status).toBe(201);
     const roster = await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${driver}`); expect(roster.status).toBe(200); expect(roster.body).toEqual([{ id: studentId, displayName: 'Active Student' }]);
+  });
+
+  it('keeps non-disclosable roster denials parity-safe across lifecycle and scope states', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const cases = [
+      ['pre-start', parityPreStartInstanceId, driver],
+      ['missing-id', randomUUID(), driver],
+      ['cross-tenant', otherInstanceId, driver],
+      ['cross-school', sameTenantForeignSchoolInstanceId, driver],
+      ['revoked-assignment', revokedAssignmentInstanceId, driver],
+      ['inactive-lifecycle', inactiveLifecycleInstanceId, driver],
+    ] as const;
+    const responses = await Promise.all(cases.map(([, id, authorization]) => request(app.getHttpServer()).get(`/driver/services/${id}/roster`).set('Authorization', `Bearer ${authorization}`)));
+    const comparable = responses.map((response) => ({ status: response.status, code: response.body?.error?.code, message: response.body?.error?.message }));
+    expect(comparable).toHaveLength(cases.length);
+    for (const value of comparable) expect(value).toEqual({ status: 404, code: 'SAFE_NOT_FOUND', message: 'An unexpected error occurred.' });
+    for (const response of responses) {
+      expect(response.body.error).toEqual(expect.objectContaining({ code: 'SAFE_NOT_FOUND', message: 'An unexpected error occurred.' }));
+      expect(Object.keys(response.body.error).sort()).toEqual(['code', 'correlation_id', 'message']);
+      expect(response.body.error).not.toHaveProperty('timestamp');
+      expect(response.body.error).not.toHaveProperty('tenant_id');
+      expect(response.body.error).not.toHaveProperty('school_id');
+      expect(response.body.error).not.toHaveProperty('service_instance_id');
+    }
+    expect((await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', 'Bearer invalid')).status).toBe(401);
+    const expired = await new SignJWT({ roles: ['driver'], tenantId }).setProtectedHeader({ alg: 'HS256', typ: 'JWT' }).setSubject(driverUserId).setIssuedAt().setExpirationTime('0s').sign(new TextEncoder().encode(process.env.AUTH_PROVISIONAL_SIGNING_SECRET!));
+    expect((await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${expired}`)).status).toBe(401);
+    await request(app.getHttpServer()).post(`/driver/services/${pendingInstanceId}/start`).set('Authorization', `Bearer ${driver}`).send({ expectedVersion: 1 });
+    expect((await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${driver}`)).status).toBe(200);
   });
 });

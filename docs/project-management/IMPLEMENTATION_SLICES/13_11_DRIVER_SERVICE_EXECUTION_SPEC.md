@@ -87,6 +87,10 @@ The following are required guards, not newly invented states:
 
 The client cannot authoritatively set actor or start time. Invalid JWT returns `401`; revoked/inactive/cross-tenant/school/missing authority returns enumeration-safe `404`; valid OCC conflict returns `409`; conflicting active assignment returns a generic `409`.
 
+### Enumeration-safe roster denial contract (Commander remediation)
+
+For `GET /driver/services/{serviceInstanceId}/roster`, the following states are intentionally indistinguishable to the caller: a valid assigned service that is pre-start (`execution_status=not_started`), an unknown service-instance identifier, a cross-tenant identifier, a foreign-school identifier (including a same-tenant school outside the Driver's assignment), a revoked Driver-service assignment, or an inactive service/actor authority. (The current assignment status vocabulary is `active|revoked`; inactive is represented by the authoritative service or actor lifecycle.) Each SHALL return HTTP `404` with the same `error.code=SAFE_NOT_FOUND` and the same generic `error.message`; the envelope SHALL disclose no tenant, school, assignment, service, lifecycle, timestamp or other state metadata. Only the correlation identifier may vary per request and is excluded from parity comparisons. Invalid or expired JWT remains `401`. After a valid assigned service is transitioned to `in_progress`, an authorized Driver roster read returns `200`.
+
 ## 6. Data Model and Schema Impact
 
 Existing logical records relevant to the boundary are:
@@ -126,6 +130,7 @@ The following are acceptance scenarios for implementation and security tests:
 7. Repeated Start after `in_progress` returns the current state without a second audit record.
 8. Successful transition, actor, tenant, school, target and correlation are atomically auditable.
 9. Roster is unavailable before Start and contains no inactive or foreign student assignment.
+10. Roster denial parity is proven for pre-start, missing-ID, cross-tenant, foreign-school, revoked-assignment and inactive-lifecycle states: HTTP status, safe code and generic message are equal, while correlation identifiers are request-specific and no sensitive metadata is present.
 
 ## 9. Security Review Checklist
 
