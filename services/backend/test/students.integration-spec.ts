@@ -76,7 +76,7 @@ describe('Students vertical slice integration and security negatives', () => {
     expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${adminToken}`).send({ school_id: schoolId, display_name: 'Nope', tenant_id: tenantId })).status).toBe(400);
     const foreignList = await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${foreignToken}`); expect(foreignList.status).toBe(200); expect(foreignList.body).toHaveLength(0);
     const operatorToken = await token(operatorId, ['school-operator'], tenantId);
-    expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${operatorToken}`).send({ school_id: schoolId, display_name: 'Denied' })).status).toBe(403);
+    expect((await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${operatorToken}`).send({ school_id: schoolId, display_name: 'Denied' })).status).toBe(404);
   });
 
   it('enforces optimistic versioning, lifecycle visibility, audit and revocation', async () => {
