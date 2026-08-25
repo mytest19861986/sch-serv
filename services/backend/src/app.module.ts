@@ -13,9 +13,13 @@ import { TenantSchoolRepository, TENANT_SCHOOL_DB } from './tenant-school/tenant
 import { TenantSchoolService } from './tenant-school/tenant-school.service.js';
 import { TenantSchoolAuthorizationPolicy } from './tenant-school/tenant-school.policy.js';
 import { Pool } from 'pg';
+import { UsersController } from './users/users.controller.js';
+import { UsersRepository, USERS_DB } from './users/users.repository.js';
+import { UsersService } from './users/users.service.js';
+import { UsersAuthorizationPolicy } from './users/users.policy.js';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController],
   providers: [
     AuthService,
     AuthGuard,
@@ -27,7 +31,11 @@ import { Pool } from 'pg';
     { provide: TENANT_SCHOOL_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     TenantSchoolRepository,
     TenantSchoolService,
-    TenantSchoolAuthorizationPolicy
+    TenantSchoolAuthorizationPolicy,
+    { provide: USERS_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
+    UsersRepository,
+    UsersService,
+    UsersAuthorizationPolicy
   ]
 })
 export class AppModule {}
