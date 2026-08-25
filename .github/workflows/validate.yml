@@ -29,6 +29,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/school_service
+      AUTH_PROVISIONAL_SIGNING_SECRET: test-secret-that-is-at-least-thirty-two-chars
     defaults:
       run:
         working-directory: services/backend

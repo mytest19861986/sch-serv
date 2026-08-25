@@ -16,6 +16,7 @@ describe('Tenant/School vertical slice integration and security negatives', () =
 
   beforeAll(async () => {
     if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL_REQUIRED_FOR_TENANT_SCHOOL_TEST');
+    process.env.AUTH_PROVISIONAL_SIGNING_SECRET = 'test-secret-that-is-at-least-thirty-two-chars';
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     await runMigrations(pool);
     await pool.query('DELETE FROM school');
