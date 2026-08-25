@@ -65,4 +65,5 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - Artifacts: `006_drivers.sql`, Drivers controller/service/repository/policy/types, AppModule wiring, and `drivers.integration-spec.ts` security-negative coverage.
 - Local validation: typecheck PASS, lint PASS, build PASS, unit tests PASS (3 suites / 8 tests). The initial root-level pnpm invocation was corrected by running from `services/backend` with the bundled Node runtime.
 - Database/integration limitation: `DATABASE_URL` is not configured in the current shell; migration and all DB-backed integration suites stop at their explicit `DATABASE_URL_REQUIRED_*` guards. This is not counted as database PASS.
+- CI evidence: GitHub Actions run `32830503559` is SUCCESS on exact SHA `aee30b2f62047f60aafb177dd58b064ea4b0e28f`; migration, typecheck, lint, build, unit (8 tests) and integration (26 tests across 6 suites, including Drivers) passed.
 - External review: not yet dispatched; required after a clean implementation SHA and CI/database evidence are available. `NO_RESPONSE != PASS`.
