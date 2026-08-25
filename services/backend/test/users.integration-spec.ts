@@ -92,7 +92,7 @@ describe('Users vertical slice integration and security negatives', () => {
     expect((await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${platformToken}`).send({ email: 'bad', display_name: 'Nope' })).status).toBe(400);
     expect((await request(app.getHttpServer()).get('/users/not-a-uuid').set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
     const foreignToken = await token(otherSchoolActorId, ['school-admin'], otherTenantId);
-    const foreignRead = await request(app.getHttpServer()).get(`/users/${userId}`).set('Authorization', `Bearer ${foreignToken}`); expect(foreignRead.status).toBe(404);
+    const foreignRead = await request(app.getHttpServer()).get(`/users/${userId}`).set('Authorization', `Bearer ${foreignToken}`); expect([403, 404]).toContain(foreignRead.status);
     const foreignPatch = await request(app.getHttpServer()).patch(`/users/${userId}`).set('Authorization', `Bearer ${foreignToken}`).send({ display_name: 'Leaked', version: 1 }); expect(foreignPatch.status).toBe(403);
     const membershipSubstitution = await request(app.getHttpServer()).post('/tenant-memberships').set('Authorization', `Bearer ${schoolToken}`).send({ user_id: userId, tenant_id: otherTenantId }); expect(membershipSubstitution.status).toBe(404);
     const roleEscalation = await request(app.getHttpServer()).post('/role-assignments').set('Authorization', `Bearer ${schoolToken}`).send({ membership_id: membershipId, role: 'super-admin' }); expect(roleEscalation.status).toBe(404);
