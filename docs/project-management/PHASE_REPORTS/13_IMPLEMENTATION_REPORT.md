@@ -51,3 +51,9 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - Closed findings: shared DB-backed authority, JWT role non-authority, revocation, Super Admin platform-wide policy, mutation-time authority linearization, required-role downgrade race, active-user membership lifecycle race, and target-tenant role-create TOCTOU.
 - Open non-blocking mediums are registered in `RISK_REGISTER.md`: provisional/bootstrap identity containment, durable denial telemetry, separate PostgreSQL pools, API hardening/test evidence, and explicit Super Admin/delegation documentation.
 - Governance controls: merge to `main`, production authentication enablement, deployment, and Slice 13.04 remain locked pending separate authorization.
+## Slice 13.05 Parents checkpoint — e3faf23785ff82b2db4eab2944bd24413f68d6d1
+
+- Scope: guardian lifecycle, tenant/school-scoped guardian–student relationships, parent child visibility, and transactional relationship revocation only.
+- Validation: local lint/typecheck/unit PASS; GitHub Actions Foundation Validation `32827973384` PASS, including migration and integration tests.
+- External review evidence: real Gemini, Qwen, and Claude messages were dispatched against exact implementation SHA `e506fa8135f2dab3e24e40602848e4ee1a58ce69`. Their browser surfaces became unresponsive before verdict extraction. Status is `NO_RESPONSE`/`UNAVAILABLE`, not PASS. The revocation-only follow-up SHA requires Commander assessment of whether re-dispatch is necessary.
+- Fallback review: no Critical or High finding identified in static architecture, DB, AuthZ/IDOR, and API/spec checks; Gate remains OPEN pending Commander decision and external-review limitation.
