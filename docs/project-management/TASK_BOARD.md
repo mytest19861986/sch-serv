@@ -17,7 +17,8 @@
 - Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; CLOSED_ACCEPTED by Commander.
 - Phase 13 Slice 13.02: Tenant / School; CLOSED_ACCEPTED by Commander.
 - Phase 13 Slice 13.03: Users; CLOSED_ACCEPTED by Commander with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
+- Phase 13 Slice 13.04: Students; CLOSED_ACCEPTED by Commander at SHA 52a7e02 with PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS.
 
 ## Next
 
-- Preserve Slice 13.03 non-blocking mediums in the risk register/backlog; await separate Governance authorization before Slice 13.04. Keep production auth, deployment, and merge-to-main locked.
+- Phase 13 Slice 13.05: Parents; implement on dedicated branch with exact-SHA CI and Gemini/Qwen/Claude review. Keep production auth, deployment, and merge-to-main locked.
