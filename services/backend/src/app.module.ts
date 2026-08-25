@@ -37,9 +37,13 @@ import { RoutesController } from './routes/routes.controller.js';
 import { RoutesRepository, ROUTES_DB } from './routes/routes.repository.js';
 import { RoutesService } from './routes/routes.service.js';
 import { RoutesAuthorizationPolicy } from './routes/routes.policy.js';
+import { ServicesController } from './services/services.controller.js';
+import { ServicesRepository, SERVICES_DB } from './services/services.repository.js';
+import { ServicesService } from './services/services.service.js';
+import { ServicesAuthorizationPolicy } from './services/services.policy.js';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController, VehiclesController, RoutesController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController, VehiclesController, RoutesController, ServicesController],
   providers: [
     AuthService,
     AuthGuard,
@@ -75,7 +79,11 @@ import { RoutesAuthorizationPolicy } from './routes/routes.policy.js';
     { provide: ROUTES_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     RoutesRepository,
     RoutesService,
-    RoutesAuthorizationPolicy
+    RoutesAuthorizationPolicy,
+    { provide: SERVICES_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
+    ServicesRepository,
+    ServicesService,
+    ServicesAuthorizationPolicy
   ]
 })
 export class AppModule {}
