@@ -29,9 +29,13 @@ import { DriversController } from './drivers/drivers.controller.js';
 import { DriversRepository, DRIVERS_DB } from './drivers/drivers.repository.js';
 import { DriversService } from './drivers/drivers.service.js';
 import { DriversAuthorizationPolicy } from './drivers/drivers.policy.js';
+import { VehiclesController } from './vehicles/vehicles.controller.js';
+import { VehiclesRepository, VEHICLES_DB } from './vehicles/vehicles.repository.js';
+import { VehiclesService } from './vehicles/vehicles.service.js';
+import { VehiclesAuthorizationPolicy } from './vehicles/vehicles.policy.js';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController, VehiclesController],
   providers: [
     AuthService,
     AuthGuard,
@@ -59,7 +63,11 @@ import { DriversAuthorizationPolicy } from './drivers/drivers.policy.js';
     { provide: DRIVERS_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     DriversRepository,
     DriversService,
-    DriversAuthorizationPolicy
+    DriversAuthorizationPolicy,
+    { provide: VEHICLES_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
+    VehiclesRepository,
+    VehiclesService,
+    VehiclesAuthorizationPolicy
   ]
 })
 export class AppModule {}

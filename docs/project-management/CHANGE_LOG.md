@@ -2,6 +2,9 @@
 
 ## 2026-08-25
 
+- Commander closed Slice 13.06 Drivers as `CLOSED_ACCEPTED` and authorized Slice 13.07 Vehicles on `phase13/slice-13-07-vehicles`.
+- Started Slice 13.07 Vehicles with tenant-scoped identity/lifecycle, DB-backed authority, transactional audit, OCC and security-negative integration coverage. Route, Service, Assignment, transport events, offline sync, notifications and dashboards remain out of scope.
+
 - Added documentation-only Project Control Center structure.
 - Validated the Project Control Center structure and recorded governance completion.
 - Added the normalized `docs/DISCOVERY.md` artifact and repository evidence report.
