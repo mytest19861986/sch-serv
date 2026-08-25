@@ -19,9 +19,14 @@ export class ActiveIdentityStatusVerifier implements IdentityStatusVerifier {
   async assertActive(principal: AuthenticatedPrincipal): Promise<AuthenticatedPrincipal | void> {
     // Provisional non-UUID subjects are retained for bootstrap/test-only flows.
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(principal.subject)) return;
-    const authorities = await this.usersRepository.getActorAuthorities(principal.subject, principal.tenantId);
+    const authorities = await this.usersRepository.getActorAuthorities(principal.subject);
     if (!authorities.length) throw new UnauthorizedException();
-    return { ...principal, roles: [...new Set(authorities.map((authority) => authority.role))] };
+    const isPlatformAdmin = authorities.some((authority) => authority.role === 'super-admin');
+    const effectiveAuthorities = isPlatformAdmin
+      ? authorities
+      : authorities.filter((authority) => !principal.tenantId || authority.tenantId === principal.tenantId);
+    if (!effectiveAuthorities.length) throw new UnauthorizedException();
+    return { ...principal, roles: [...new Set(effectiveAuthorities.map((authority) => authority.role))] };
   }
 }
 
