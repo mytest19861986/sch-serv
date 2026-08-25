@@ -130,7 +130,7 @@ Both single-event critical writes and `POST /driver/sync/events` batch reconcili
 
 ## 23. Vehicle APIs
 
-Vehicle lifecycle and assignment references are tenant-consistent and controlled by scoped school administration.
+Vehicle lifecycle and assignment references are tenant-consistent and controlled by scoped school administration. Slice 13.07 exposes only a tenant-scoped stable fleet `identifier` plus lifecycle/version fields; plate, VIN, capacity and assignment fields are outside this slice.
 
 Local capture is provisional. Each sync item carries client event/idempotency identity, context, occurred time and known version. Server revalidates current or explicitly allowed historical authority; rejected evidence remains visible to Driver through a safe outcome category.
 

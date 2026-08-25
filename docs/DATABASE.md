@@ -58,7 +58,7 @@ Child identity, guardian relationships, assignment/route context, device/session
 
 ## 15. Vehicle Data Model
 
-`vehicle` belongs to a tenant, has a stable identifier and active/archive lifecycle. It contains only product-required operational attributes.
+`vehicle` belongs to a tenant, has a tenant-scoped stable fleet identifier and active/archive lifecycle. The identifier is an internal fleet identity for this slice; plate, VIN, capacity and school-level semantics are not assumed until separately approved. Tenant ownership is protected by an explicit restrictive foreign key.
 
 ## 16. Route Data Model
 

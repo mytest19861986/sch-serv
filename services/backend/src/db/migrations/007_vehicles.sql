@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS vehicle (
   id UUID PRIMARY KEY,
-  tenant_id UUID NOT NULL REFERENCES tenant(id),
+  tenant_id UUID NOT NULL REFERENCES tenant(id) ON DELETE RESTRICT,
   identifier TEXT NOT NULL CHECK (char_length(identifier) BETWEEN 1 AND 120),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
   version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
