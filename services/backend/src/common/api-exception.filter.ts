@@ -14,7 +14,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       error: {
         code,
         message: this.messageFor(code),
-        correlationId: request.correlationId ?? 'unavailable'
+        correlation_id: request.correlationId ?? 'unavailable'
       }
     });
   }

@@ -38,6 +38,7 @@ describe('authentication foundation integration', () => {
     const response = await request(app.getHttpServer()).get('/authz/context');
     expect(response.status).toBe(401);
     expect(response.body.error).toMatchObject({ code: 'AUTHENTICATION_REQUIRED', message: 'Authentication is required.' });
+    expect(response.body.error.correlation_id).toBe(response.headers['x-correlation-id']);
     expect(JSON.stringify(response.body)).not.toContain('secret');
   });
 
@@ -62,5 +63,11 @@ describe('authentication foundation integration', () => {
     const response = await request(app.getHttpServer()).post('/auth/login').send({ username: 'unknown', password: 'wrong' });
     expect(response.status).toBe(401);
     expect(response.body.error).toMatchObject({ code: 'AUTHENTICATION_REQUIRED' });
+  });
+
+  it('rejects unknown login fields', async () => {
+    const response = await request(app.getHttpServer()).post('/auth/login').send({ username: 'u', password: 'p', role: 'admin' });
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('VALIDATION_ERROR');
   });
 });
