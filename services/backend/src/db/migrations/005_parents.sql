@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS student_guardian_relationship (
 );
 CREATE INDEX IF NOT EXISTS relationship_guardian_status_idx ON student_guardian_relationship (guardian_id, status, student_id);
 CREATE INDEX IF NOT EXISTS relationship_student_status_idx ON student_guardian_relationship (student_id, status, guardian_id);
+CREATE UNIQUE INDEX IF NOT EXISTS student_id_tenant_unique_idx ON student (id, tenant_id);
 CREATE UNIQUE INDEX IF NOT EXISTS guardian_school_tenant_unique_idx ON school (id, tenant_id);
 ALTER TABLE student_guardian_relationship DROP CONSTRAINT IF EXISTS relationship_school_tenant_match;
 ALTER TABLE student_guardian_relationship ADD CONSTRAINT relationship_school_tenant_match FOREIGN KEY (school_id, tenant_id) REFERENCES school (id, tenant_id) ON DELETE RESTRICT;
+ALTER TABLE student_guardian_relationship DROP CONSTRAINT IF EXISTS relationship_student_tenant_match;
+ALTER TABLE student_guardian_relationship ADD CONSTRAINT relationship_student_tenant_match FOREIGN KEY (student_id, tenant_id) REFERENCES student (id, tenant_id) ON DELETE RESTRICT;
+ALTER TABLE student_guardian_relationship DROP CONSTRAINT IF EXISTS relationship_guardian_tenant_match;
+ALTER TABLE student_guardian_relationship ADD CONSTRAINT relationship_guardian_tenant_match FOREIGN KEY (guardian_id, tenant_id) REFERENCES guardian (id, tenant_id) ON DELETE RESTRICT;
