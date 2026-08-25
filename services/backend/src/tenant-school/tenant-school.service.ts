@@ -44,6 +44,7 @@ export class TenantSchoolService {
     if (!isUuid(id)) throw new NotFoundException();
     const scopedTenant = this.policy.isSuperAdmin(context) ? undefined : context.principal.tenantId;
     const record = await this.repository.getSchool(id, scopedTenant); if (!record || !this.policy.canManageSchool(context, record.tenantId)) throw new NotFoundException();
+    const tenant = await this.repository.getTenant(record.tenantId, scopedTenant); if (!tenant || (!this.policy.isSuperAdmin(context) && tenant.status !== 'active')) throw new NotFoundException();
     if (!this.policy.isSuperAdmin(context) && record.status !== 'active') throw new NotFoundException(); return record;
   }
 
@@ -51,6 +52,7 @@ export class TenantSchoolService {
     if (!isUuid(id)) throw new NotFoundException();
     const scopedTenant = this.policy.isSuperAdmin(context) ? undefined : context.principal.tenantId;
     const current = await this.repository.getSchool(id, scopedTenant); if (!current || !this.policy.canManageSchool(context, current.tenantId)) throw new NotFoundException();
+    const tenant = await this.repository.getTenant(current.tenantId, scopedTenant); if (!tenant || (!this.policy.isSuperAdmin(context) && tenant.status !== 'active')) throw new NotFoundException();
     if (!this.policy.isSuperAdmin(context) && current.status !== 'active') throw new NotFoundException();
     const updated = await persist(() => this.repository.updateSchool(id, parseUpdate(body), { tenantId: scopedTenant, actorId: context.principal.subject, correlationId: context.correlationId })); if (!updated) throw new ConflictException(); return updated;
   }
