@@ -82,7 +82,7 @@ describe('Users vertical slice integration and security negatives', () => {
     const schoolToken = await token('school-admin-users-3', ['school-admin'], tenantId);
     const existing = await pool.query<{ email: string; version: number }>('SELECT email, version FROM "user" WHERE id = $1', [userId]);
     const duplicate = await request(app.getHttpServer()).post('/users').set('Authorization', `Bearer ${schoolToken}`).send({ email: existing.rows[0]!.email, display_name: 'Duplicate' }); expect(duplicate.status).toBe(409);
-    const stale = await request(app.getHttpServer()).patch(`/users/${userId}`).set('Authorization', `Bearer ${schoolToken}`).send({ display_name: 'Stale', version: existing.rows[0]!.version }); expect(stale.status).toBe(409);
+    const stale = await request(app.getHttpServer()).patch(`/users/${userId}`).set('Authorization', `Bearer ${schoolToken}`).send({ display_name: 'Stale', version: existing.rows[0]!.version - 1 }); expect(stale.status).toBe(409);
     const current = await pool.query<{ version: number }>('SELECT version FROM "user" WHERE id = $1', [userId]);
     const disabled = await request(app.getHttpServer()).patch(`/users/${userId}`).set('Authorization', `Bearer ${schoolToken}`).send({ status: 'disabled', version: current.rows[0]!.version }); expect(disabled.status).toBe(200);
     expect((await request(app.getHttpServer()).get(`/users/${userId}`).set('Authorization', `Bearer ${schoolToken}`)).status).toBe(404);
