@@ -1,5 +1,12 @@
 # Decision Log
 
+## Phase 13.01 implementation decisions
+
+- IMP-ADR-13-01 Provisional HMAC JWT is test/foundation-only and production configuration fails closed until final session, expiry, audience, rotation, revocation, and device policy is approved.
+- IMP-ADR-13-02 Authentication and authorization derive tenant context from the verified server token; client-supplied tenant headers are non-authoritative.
+- IMP-ADR-13-03 No identity/business persistence schema or migration is introduced in Slice 13.01; persistence-backed identity status is an explicit provider boundary.
+- IMP-ADR-13-04 CI validation is read-only and deployment-free; workflow actions are pinned and permissions are limited to repository contents read.
+
 ## Candidate ADRs from Discovery
 
 - Modular Monolith first.

@@ -1,5 +1,11 @@
 # Blockers
 
+## Phase 13.01 Implementation
+
+- No repository or CI execution blocker: latest Foundation Validation run `32810801669` completed successfully.
+- Gate remains `IMPROVEMENT_REQUIRED` pending Backend/Security re-review of provisional authentication and remaining foundation operational findings.
+- Production authentication, identity persistence, session/device lifecycle, and Slice 13.02 are explicitly blocked by approved scope and unresolved security policy; no implementation has started for them.
+
 ## Current
 
 No product blocker for Discovery Gate.

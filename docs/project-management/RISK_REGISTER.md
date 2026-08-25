@@ -1,5 +1,14 @@
 # Risk Register
 
+## Phase 13.01
+
+| ID | Risk | Severity | Mitigation/Disposition | Gate relevance |
+|---|---|---|---|---|
+| R-13-01 | Provisional token issuer lacks final expiry, audience, rotation, revocation and device policy | High | Production configuration fails closed; final policy remains required before production auth | Blocks production auth and Slice 13.02 |
+| R-13-02 | Identity status is an enforced but non-persistent provider hook | High | Guard invokes status verifier on every protected request; persistence is deferred outside slice scope | Blocks production identity lifecycle claim |
+| R-13-03 | Runtime logger/readiness semantics are foundation-level and not operationally complete | Medium | Findings are recorded for Backend/Security re-review; no production observability/SLO claim | Non-blocking for foundation Gate, blocking for production readiness |
+| R-13-04 | Live branch protection and repository Actions policy remain external governance decisions | Medium | No live policy mutation performed; Phase 12 decision preserved | Must resolve before implementation governance sign-off |
+
 ## Phase 12
 
 | ID | Risk | Severity | Mitigation/Disposition | Gate relevance |

@@ -39,3 +39,6 @@
 - Initialized the local Git repository, connected it to `origin/main`, and pushed foundation-only structure, documentation, environment template, CODEOWNERS proposal, and CI skeleton.
 - Added Phase 12 governance conventions, sensitive-path ownership proposal, pull-request template, and non-executable boundary markers. GitHub branch protection and repository-wide Actions policy remain unchanged pending Commander decision.
 - Commander closed Phase 12 Repository Setup and Foundation with `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` (94/100 GREEN). The Commander declined live GitHub branch-protection/ruleset and repository-wide Actions policy changes for now; Phase 13+ remains locked.
+- Authorized Phase 13.01 Foundation Auth implementation slice on `phase13/foundation-auth`; implementation remains isolated from `main` and production deployment.
+- Added provisional auth runtime, deny-by-default authorization boundary, safe error envelope, correlation identity, health/readiness endpoints, and automated negative-path coverage. CI run `32810801669` passed the documented validation matrix.
+- Recorded Phase 13.01 implementation Gate as `IMPROVEMENT_REQUIRED` pending required Backend/Security re-review; this is not production-auth approval and Slice 13.02 remains locked.

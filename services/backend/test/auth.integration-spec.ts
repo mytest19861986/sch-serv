@@ -59,6 +59,25 @@ describe('authentication foundation integration', () => {
     expect(response.body.error).toMatchObject({ code: 'ACCESS_DENIED' });
   });
 
+  it('rejects a tampered server-issued token without leaking token details', async () => {
+    const token = await authService.issueForTestOnly({ subject: 'user-3', roles: ['foundation-user'] });
+    const tampered = `${token.slice(0, -1)}${token.endsWith('a') ? 'b' : 'a'}`;
+    const response = await request(app.getHttpServer())
+      .get('/authz/context')
+      .set('Authorization', `Bearer ${tampered}`);
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('AUTHENTICATION_REQUIRED');
+    expect(JSON.stringify(response.body)).not.toContain(tampered);
+  });
+
+  it('rejects malformed bearer credentials', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/authz/context')
+      .set('Authorization', 'Basic not-a-bearer-token');
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('AUTHENTICATION_REQUIRED');
+  });
+
   it('returns a privacy-safe response for invalid credentials', async () => {
     const response = await request(app.getHttpServer()).post('/auth/login').send({ username: 'unknown', password: 'wrong' });
     expect(response.status).toBe(401);

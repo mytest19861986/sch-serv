@@ -2,7 +2,7 @@
 
 ## Status
 
-IMPLEMENTATION_COMPLETE_PENDING_REVIEW_REMEDIATION. Branch `phase13/foundation-auth`; latest commit `f98d7b0`.
+IMPLEMENTATION_COMPLETE_PENDING_REVIEW_REMEDIATION. Branch `phase13/foundation-auth`; latest implementation commit `f98d7b0` with current documentation/test updates uncommitted.
 
 ## Scope
 
@@ -11,7 +11,7 @@ Implemented only backend runtime/configuration, health/readiness, correlation, s
 ## Evidence
 
 - GitHub Actions run `32810718303` for `f98d7b0`: SUCCESS.
-- CI ran frozen-lockfile install, typecheck, lint, build, unit tests (6), and integration tests (6).
+- CI run `32810801669` passed frozen-lockfile install, typecheck, lint, build, unit tests (6), and integration tests (6). Local rerun after negative-path additions passed unit tests (6) and integration tests (8); exact exits were typecheck=0, lint=0, test=0, integration=0.
 - Local validation from the backend workdir: all applicable commands exit 0 using the bundled Node runtime.
 - Earlier failures remain in the evidence history and were not overwritten.
 
