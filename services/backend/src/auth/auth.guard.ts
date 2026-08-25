@@ -17,7 +17,8 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException();
     const principal = await this.tokenIssuer.verify(token);
     const authoritativePrincipal = await this.identityStatusVerifier.assertActive(principal);
-    request.principal = authoritativePrincipal ?? principal;
+    if (!authoritativePrincipal) throw new UnauthorizedException();
+    request.principal = authoritativePrincipal;
     return true;
   }
 }

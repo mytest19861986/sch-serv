@@ -16,7 +16,7 @@ export class DenyByDefaultCredentialVerifier implements CredentialVerifier {
 export class ActiveIdentityStatusVerifier implements IdentityStatusVerifier {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async assertActive(principal: AuthenticatedPrincipal): Promise<AuthenticatedPrincipal | void> {
+  async assertActive(principal: AuthenticatedPrincipal): Promise<AuthenticatedPrincipal> {
     // Every request subject must resolve to a provisioned database identity.
     // Never fall back to unverified JWT tenant/role claims for non-UUID subjects.
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(principal.subject)) {

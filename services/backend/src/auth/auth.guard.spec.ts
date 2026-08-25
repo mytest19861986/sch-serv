@@ -13,4 +13,14 @@ describe('AuthGuard identity status boundary', () => {
     const context = { switchToHttp: () => ({ getRequest: () => request }) } as never;
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
+
+  it('fails closed when the identity status verifier returns no authoritative principal', async () => {
+    const guard = new AuthGuard(
+      { issue: async () => 'unused', verify: async () => ({ subject: 'user-1', roles: [] }) },
+      { assertActive: async () => undefined as never }
+    );
+    const request = { header: () => 'Bearer valid-token' } as never;
+    const context = { switchToHttp: () => ({ getRequest: () => request }) } as never;
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
 });

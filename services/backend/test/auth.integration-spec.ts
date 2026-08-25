@@ -18,7 +18,7 @@ describe('authentication foundation integration', () => {
       .overrideProvider(CREDENTIAL_VERIFIER)
       .useValue({ verify: async () => null })
       .overrideProvider(IDENTITY_STATUS_VERIFIER)
-      .useValue({ assertActive: async () => undefined })
+      .useValue({ assertActive: async (principal: { subject: string; tenantId?: string; roles: string[] }) => principal })
       .compile();
     app = module.createNestApplication();
     app.use(correlationMiddleware);
