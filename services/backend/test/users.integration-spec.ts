@@ -44,7 +44,7 @@ describe('Users vertical slice integration and security negatives', () => {
     app = module.createNestApplication(); app.use(correlationMiddleware); app.useGlobalFilters(new ApiExceptionFilter()); await app.init(); authService = app.get(AuthService);
     tenantId = await postTenant(`Users Tenant ${Date.now()}`);
     otherTenantId = await postTenant(`Users Other Tenant ${Date.now()}`);
-    const migration = await pool.query<{ version: string }>("SELECT version FROM schema_migrations WHERE version = '003_users'");
+    const migration = await pool.query<{ version: string }>("SELECT version FROM _schema_migrations WHERE version = '003_users'");
     expect(migration.rows).toHaveLength(1);
     platformActorId = await provisionActor(tenantId, 'super-admin');
     schoolActorId = await provisionActor(tenantId, 'school-admin');
