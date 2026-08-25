@@ -18,6 +18,7 @@ describe('Students vertical slice integration and security negatives', () => {
   let schoolId: string;
   let otherSchoolId: string;
   let adminId: string;
+  let platformId: string;
   let operatorId: string;
   let otherAdminId: string;
 
@@ -42,7 +43,7 @@ describe('Students vertical slice integration and security negatives', () => {
     const schoolToken = await token('students-school-bootstrap', ['school-admin'], tenantId);
     const school = await request(app.getHttpServer()).post('/schools').set('Authorization', `Bearer ${schoolToken}`).send({ tenant_id: tenantId, name: 'Students School' }); expect(school.status).toBe(201); schoolId = school.body.id;
     const otherSchool = await request(app.getHttpServer()).post('/schools').set('Authorization', `Bearer ${platformToken}`).send({ tenant_id: otherTenantId, name: 'Other Students School' }); expect(otherSchool.status).toBe(201); otherSchoolId = otherSchool.body.id;
-    adminId = await provisionActor(tenantId, 'school-admin'); operatorId = await provisionActor(tenantId, 'school-operator'); otherAdminId = await provisionActor(otherTenantId, 'school-admin');
+    platformId = await provisionActor(tenantId, 'super-admin'); adminId = await provisionActor(tenantId, 'school-admin'); operatorId = await provisionActor(tenantId, 'school-operator'); otherAdminId = await provisionActor(otherTenantId, 'school-admin');
     const migration = await pool.query<{ version: string }>("SELECT version FROM _schema_migrations WHERE version = '004_students'"); expect(migration.rows).toHaveLength(1);
   });
 
@@ -85,7 +86,17 @@ describe('Students vertical slice integration and security negatives', () => {
     const updated = await request(app.getHttpServer()).patch(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ status: 'archived', version: created.body.version }); expect(updated.status).toBe(200);
     expect((await request(app.getHttpServer()).get(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).status).toBe(404);
     const audit = await pool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM audit_record WHERE action LIKE 'student.%' AND target_id = $1", [created.body.id]); expect(Number(audit.rows[0]!.count)).toBe(2);
+    const schoolRow = await pool.query<{ version: number }>('SELECT version FROM school WHERE id = $1', [schoolId]);
+    const archivedSchool = await request(app.getHttpServer()).patch(`/schools/${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ status: 'archived', version: schoolRow.rows[0]!.version }); expect(archivedSchool.status).toBe(200);
+    expect((await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).body).toHaveLength(0);
+    const reactivatedSchool = await request(app.getHttpServer()).patch(`/schools/${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ status: 'active', version: archivedSchool.body.version }); expect(reactivatedSchool.status).toBe(200);
     await pool.query("UPDATE tenant_membership SET status = 'revoked', version = version + 1 WHERE user_id = $1 AND tenant_id = $2", [adminId, tenantId]);
     expect((await request(app.getHttpServer()).get(`/students?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).status).toBe(401);
+  });
+
+  it('permits an authoritative platform Super Admin to target another tenant explicitly', async () => {
+    const platformToken = await token(platformId, ['super-admin'], tenantId);
+    const created = await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${platformToken}`).send({ school_id: otherSchoolId, display_name: 'Platform Managed Student' });
+    expect(created.status).toBe(201); expect(created.body.tenantId).toBe(otherTenantId); expect(created.body.schoolId).toBe(otherSchoolId);
   });
 });
