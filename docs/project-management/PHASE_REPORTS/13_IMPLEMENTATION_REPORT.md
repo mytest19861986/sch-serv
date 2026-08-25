@@ -57,3 +57,12 @@ Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slic
 - Validation: local lint/typecheck/unit PASS; GitHub Actions Foundation Validation `32827973384` PASS, including migration and integration tests.
 - External review evidence: real Gemini, Qwen, and Claude messages were dispatched against exact implementation SHA `e506fa8135f2dab3e24e40602848e4ee1a58ce69`. Their browser surfaces became unresponsive before verdict extraction. Status is `NO_RESPONSE`/`UNAVAILABLE`, not PASS. The revocation-only follow-up SHA requires Commander assessment of whether re-dispatch is necessary.
 - Fallback review: no Critical or High finding identified in static architecture, DB, AuthZ/IDOR, and API/spec checks; Gate remains OPEN pending Commander decision and external-review limitation.
+
+## Slice 13.06 Drivers implementation checkpoint
+
+- Status: `IN_PROGRESS` on dedicated branch `phase13/slice-13-06-drivers`, authorized by the Commander.
+- Scope: tenant-scoped Driver profile lifecycle only; active role validation, tenant isolation, management/read policy, transactional audit and optimistic version updates. Assignments, vehicles, routes, services, transport events, offline sync and dashboards remain out of scope.
+- Artifacts: `006_drivers.sql`, Drivers controller/service/repository/policy/types, AppModule wiring, and `drivers.integration-spec.ts` security-negative coverage.
+- Local validation: typecheck PASS, lint PASS, build PASS, unit tests PASS (3 suites / 8 tests). The initial root-level pnpm invocation was corrected by running from `services/backend` with the bundled Node runtime.
+- Database/integration limitation: `DATABASE_URL` is not configured in the current shell; migration and all DB-backed integration suites stop at their explicit `DATABASE_URL_REQUIRED_*` guards. This is not counted as database PASS.
+- External review: not yet dispatched; required after a clean implementation SHA and CI/database evidence are available. `NO_RESPONSE != PASS`.

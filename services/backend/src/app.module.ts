@@ -25,9 +25,13 @@ import { ParentsController } from './parents/parents.controller.js';
 import { ParentsRepository, PARENTS_DB } from './parents/parents.repository.js';
 import { ParentsService } from './parents/parents.service.js';
 import { ParentsAuthorizationPolicy } from './parents/parents.policy.js';
+import { DriversController } from './drivers/drivers.controller.js';
+import { DriversRepository, DRIVERS_DB } from './drivers/drivers.repository.js';
+import { DriversService } from './drivers/drivers.service.js';
+import { DriversAuthorizationPolicy } from './drivers/drivers.policy.js';
 
 @Module({
-  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController],
+  controllers: [HealthController, AuthController, AuthorizationController, TenantSchoolController, UsersController, StudentsController, ParentsController, DriversController],
   providers: [
     AuthService,
     AuthGuard,
@@ -51,7 +55,11 @@ import { ParentsAuthorizationPolicy } from './parents/parents.policy.js';
     { provide: PARENTS_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
     ParentsRepository,
     ParentsService,
-    ParentsAuthorizationPolicy
+    ParentsAuthorizationPolicy,
+    { provide: DRIVERS_DB, useFactory: () => { const connectionString = process.env.DATABASE_URL; if (!connectionString) throw new Error('CONFIGURATION_INVALID'); return new Pool({ connectionString }); } },
+    DriversRepository,
+    DriversService,
+    DriversAuthorizationPolicy
   ]
 })
 export class AppModule {}

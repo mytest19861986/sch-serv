@@ -16,5 +16,5 @@
 | 10 | Security Design | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
 | 11 | Technical Specification | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (88/100 GREEN) |
 | 12 | Repository Setup | Closed: PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS (94/100 GREEN) |
-| 13 | Implementation | Slices 13.01–13.04 CLOSED_ACCEPTED; Slice 13.05 Parents IN_PROGRESS |
+| 13 | Implementation | Slices 13.01–13.05 CLOSED_ACCEPTED; Slice 13.06 Drivers IN_PROGRESS |
 | 14–18 | Test, Security, Performance, Deployment, Documentation | Pending authorization |
