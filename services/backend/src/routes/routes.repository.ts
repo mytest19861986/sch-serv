@@ -58,12 +58,13 @@ export class RoutesRepository implements OnModuleDestroy {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const current = await client.query<{ tenant_id: string; school_status: string; tenant_status: string }>('SELECT r.tenant_id, sc.status AS school_status, t.status AS tenant_status FROM route r JOIN school sc ON sc.id = r.school_id AND sc.tenant_id = r.tenant_id JOIN tenant t ON t.id = r.tenant_id WHERE r.id = $1 AND r.school_id = $2 FOR UPDATE OF r, sc, t', [id, schoolId]);
+      const current = await client.query<{ tenant_id: string; route_status: RouteStatus; school_status: string; tenant_status: string }>('SELECT r.tenant_id, r.status AS route_status, sc.status AS school_status, t.status AS tenant_status FROM route r JOIN school sc ON sc.id = r.school_id AND sc.tenant_id = r.tenant_id JOIN tenant t ON t.id = r.tenant_id WHERE r.id = $1 AND r.school_id = $2 FOR UPDATE OF r, sc, t', [id, schoolId]);
       if (!current.rows[0]) { await client.query('ROLLBACK'); return null; }
       if (current.rows[0].school_status !== 'active') throw error('SCHOOL_LIFECYCLE_DENIED');
       if (current.rows[0].tenant_status !== 'active') throw error('TENANT_LIFECYCLE_DENIED');
+      if (current.rows[0].route_status !== 'active') throw error('ROUTE_LIFECYCLE_DENIED');
       await this.lockAuthority(client, context.actorId, current.rows[0].tenant_id, context.requiredRoles ?? ['school-admin', 'super-admin']);
-      const result = await client.query<RouteRow>('UPDATE route SET name = COALESCE($3, name), status = COALESCE($4, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND school_id = $2 AND version = $5 RETURNING id, tenant_id, school_id, name, status, version, created_at, updated_at', [id, schoolId, input.name ?? null, input.status ?? null, input.version]);
+      const result = await client.query<RouteRow>('UPDATE route SET name = COALESCE($3, name), status = COALESCE($4, status), version = version + 1, updated_at = NOW() WHERE id = $1 AND school_id = $2 AND status = \'active\' AND version = $5 RETURNING id, tenant_id, school_id, name, status, version, created_at, updated_at', [id, schoolId, input.name ?? null, input.status ?? null, input.version]);
       if (!result.rows[0]) { await client.query('ROLLBACK'); return null; }
       await this.audit(client, context, current.rows[0].tenant_id, id, 'route.update');
       await client.query('COMMIT');
