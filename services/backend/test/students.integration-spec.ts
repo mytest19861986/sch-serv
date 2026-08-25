@@ -105,6 +105,8 @@ describe('Students vertical slice integration and security negatives', () => {
   it('enforces optimistic versioning, lifecycle visibility, audit and revocation', async () => {
     const adminToken = await token(adminId, ['school-admin'], tenantId);
     const created = await request(app.getHttpServer()).post('/students').set('Authorization', `Bearer ${adminToken}`).send({ school_id: schoolId, display_name: 'Student Two' }); expect(created.status).toBe(201);
+    expect((await request(app.getHttpServer()).patch(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ display_name: 'Invalid Zero', version: 0 })).status).toBe(400);
+    expect((await request(app.getHttpServer()).patch(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ display_name: 'Invalid Negative', version: -1 })).status).toBe(400);
     const stale = await request(app.getHttpServer()).patch(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ display_name: 'Stale', version: created.body.version - 1 }); expect(stale.status).toBe(409);
     const updated = await request(app.getHttpServer()).patch(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`).send({ status: 'archived', version: created.body.version }); expect(updated.status).toBe(200);
     expect((await request(app.getHttpServer()).get(`/students/${created.body.id}?school_id=${schoolId}`).set('Authorization', `Bearer ${adminToken}`)).status).toBe(404);
