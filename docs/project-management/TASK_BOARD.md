@@ -14,8 +14,9 @@
 
 ## In Progress
 
-- Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; implementation and required reviews complete, Gate decision pending.
+- Phase 13 Slice 13.01: Foundation Runtime and Authentication Base; CLOSED_ACCEPTED by Commander.
+- Phase 13 Slice 13.02: Tenant / School; authorized, independent task specification pending.
 
 ## Next
 
-- Commander Gate decision for Slice 13.01; keep production auth and Slice 13.02 locked unless explicitly authorized.
+- Produce the independent Slice 13.02 scope/plan; keep production auth, deployment, and merge-to-main governance locked.

@@ -2,7 +2,7 @@
 
 ## Status
 
-IMPLEMENTATION_COMPLETE_PENDING_COMMANDER_GATE. Branch `phase13/foundation-auth`; latest implementation commit `cffedc3`.
+IMPLEMENTATION_COMPLETE / GATE_CLOSED_ACCEPTED. Branch `phase13/foundation-auth`; latest implementation commit `facd38c`.
 
 ## Scope
 
@@ -24,4 +24,4 @@ Implemented only backend runtime/configuration, health/readiness, correlation, s
 
 ## Gate
 
-`PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` recommended after completed Architecture and Backend/Security re-reviews. Commander Gate decision is pending; merge and Slice 13.02 remain locked.
+Commander accepted `PASS_WITH_NON_BLOCKING_OPEN_QUESTIONS` for Slice 13.01. Slice 13.02 Tenant / School is authorized as an independent task; merge to main, production authentication, and deployment remain locked.
