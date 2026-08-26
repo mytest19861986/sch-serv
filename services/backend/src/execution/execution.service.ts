@@ -26,7 +26,6 @@ export class ExecutionService {
     if (!isUuid(serviceInstanceId) || !isUuid(studentId)) throw new NotFoundException();
     const input = parsePickupInput(body);
     if (!isUuid(idempotencyKey)) throw new BadRequestException();
-    if (idempotencyKey.toLowerCase() !== input.clientEventId.toLowerCase()) throw new ConflictException();
-    return persist(() => this.repository.pickup(context.principal.subject, serviceInstanceId, studentId, input, context.correlationId));
+    return persist(() => this.repository.pickup(context.principal.subject, serviceInstanceId, studentId, input, context.correlationId, idempotencyKey));
   }
 }
