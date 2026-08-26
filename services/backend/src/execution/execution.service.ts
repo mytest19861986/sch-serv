@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExecutionAuthorizationPolicy, type ExecutionAuthorizationContext } from './execution.policy.js';
 import { ExecutionRepository } from './execution.repository.js';
 import { isUuid, parsePickupInput, parseStartInput } from './execution.types.js';
@@ -23,8 +23,10 @@ export class ExecutionService {
   start(context: ExecutionAuthorizationContext, id: string, body: unknown) { this.assertDriver(context); if (!isUuid(id)) throw new NotFoundException(); const input = parseStartInput(body); return persist(() => this.repository.start(context.principal.subject, id, input, context.correlationId)); }
   pickup(context: ExecutionAuthorizationContext, serviceInstanceId: string, studentId: string, body: unknown, idempotencyKey?: string) {
     this.assertDriver(context);
-    if (!isUuid(serviceInstanceId) || !isUuid(studentId) || !idempotencyKey?.trim()) throw new NotFoundException();
+    if (!isUuid(serviceInstanceId) || !isUuid(studentId)) throw new NotFoundException();
     const input = parsePickupInput(body);
+    if (!isUuid(idempotencyKey)) throw new BadRequestException();
+    if (idempotencyKey.toLowerCase() !== input.clientEventId.toLowerCase()) throw new ConflictException();
     return persist(() => this.repository.pickup(context.principal.subject, serviceInstanceId, studentId, input, context.correlationId));
   }
 }

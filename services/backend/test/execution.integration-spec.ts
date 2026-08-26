@@ -124,6 +124,10 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const foreign = await token(otherDriverUserId, ['driver'], otherTenantId);
     const denied = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${foreign}`).set('Idempotency-Key', randomUUID()).send({ ...body, client_event_id: randomUUID() });
     expect(denied.status).toBe(404);
+    const mismatch = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', randomUUID()).send(body);
+    expect(mismatch.status).toBe(409);
+    const malformedKey = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', 'not-a-uuid').send(body);
+    expect(malformedKey.status).toBe(400);
     await pool.query('DELETE FROM student_transport_current_state WHERE tenant_id = $1 AND service_instance_id = $2 AND student_id = $3', [tenantId, serviceInstanceId, studentId]);
     await pool.query('DELETE FROM transport_event WHERE tenant_id = $1 AND client_event_id = $2', [tenantId, clientEventId]);
   });
