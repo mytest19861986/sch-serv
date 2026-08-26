@@ -144,11 +144,15 @@ export class ExecutionRepository implements OnModuleDestroy {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      const actor = await client.query<{ id: string; status: string }>(
+        `SELECT id, status FROM "user" WHERE id=$1 FOR UPDATE`, [actorId]);
+      if (!actor.rows[0] || actor.rows[0].status !== 'active') throw error('RESOURCE_NOT_FOUND');
       const authority = await client.query(
-        `SELECT u.id, m.tenant_id FROM "user" u
-         JOIN tenant_membership m ON m.user_id=u.id AND m.status='active'
+        `SELECT m.tenant_id FROM tenant_membership m
          JOIN role_assignment ra ON ra.membership_id=m.id AND ra.role='driver' AND ra.status='active'
-         WHERE u.id=$1 AND u.status='active' FOR UPDATE OF u,m,ra`, [actorId]);
+         WHERE m.user_id=$1 AND m.status='active' AND m.tenant_id IN
+           (SELECT si.tenant_id FROM service_instance si WHERE si.id=$2)
+         FOR UPDATE OF m,ra`, [actorId, serviceInstanceId]);
       const instance = await client.query<ServiceRow>(
         `SELECT si.id, si.tenant_id, si.school_id, si.operational_date, si.status AS lifecycle_status, si.execution_status, si.version
          FROM service_instance si WHERE si.id = $1`, [serviceInstanceId]);
