@@ -120,6 +120,10 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const replay = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
     expect(replay.status).toBe(201);
     expect(replay.body.disposition).toBe('REPLAYED');
+    const changedIntent = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send({ ...body, known_state_version: 0 });
+    expect(changedIntent.status).toBe(409);
+    expect(changedIntent.body.error).toEqual(expect.objectContaining({ code: 'STATE_CONFLICT', message: 'The request conflicts with the current state.' }));
+    expect(Object.keys(changedIntent.body.error).sort()).toEqual(['code', 'correlation_id', 'message']);
     const metadataVariant = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send({ ...body, occurred_at: new Date(Date.now() + 86400000).toISOString(), device_context: { network: 'changed' } });
     expect(metadataVariant.status).toBe(201);
     expect(metadataVariant.body.disposition).toBe('REPLAYED');
@@ -136,6 +140,11 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     expect(malformedKey.status).toBe(400);
     const missingKey = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).send(body);
     expect(missingKey.status).toBe(400);
+    const assignment = await pool.query<{ id: string }>('SELECT id FROM driver_service_assignment WHERE service_instance_id=$1 AND driver_id=$2', [serviceInstanceId, driverProfileId]);
+    await pool.query("UPDATE driver_service_assignment SET status='revoked' WHERE id=$1", [assignment.rows[0]!.id]);
+    const revokedReplay = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
+    expect(revokedReplay.status).toBe(404);
+    await pool.query("UPDATE driver_service_assignment SET status='active' WHERE id=$1", [assignment.rows[0]!.id]);
     await pool.query('DELETE FROM student_transport_current_state WHERE tenant_id = $1 AND service_instance_id = $2 AND student_id = $3', [tenantId, serviceInstanceId, studentId]);
     await pool.query('DELETE FROM transport_event WHERE tenant_id = $1 AND client_event_id = $2', [tenantId, clientEventId]);
   });
@@ -155,5 +164,48 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     await pool.query('DELETE FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, concurrentKey]);
     await pool.query('DELETE FROM student_service_assignment WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, concurrentStudentId]);
     await pool.query('DELETE FROM student WHERE id=$1', [concurrentStudentId]);
+  });
+
+  it('returns conflict for concurrent same-key requests with different intent', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const concurrentStudentId = randomUUID(); const concurrentKey = randomUUID();
+    await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4)', [concurrentStudentId, tenantId, schoolId, 'Conflict Student']);
+    await pool.query('INSERT INTO student_service_assignment(id,tenant_id,school_id,service_instance_id,student_id) VALUES($1,$2,$3,$4,$5)', [randomUUID(), tenantId, schoolId, serviceInstanceId, concurrentStudentId]);
+    const base = { client_event_id: concurrentKey, occurred_at: new Date().toISOString() };
+    const responses = await Promise.all([
+      request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${concurrentStudentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', concurrentKey).send(base),
+      request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${concurrentStudentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', concurrentKey).send({ ...base, known_state_version: 0 }),
+    ]);
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 409]);
+    expect(responses.find((response) => response.status === 201)?.body.disposition).toBe('COMMITTED');
+    const conflict = responses.find((response) => response.status === 409)!;
+    expect(conflict.body.error.code).toBe('STATE_CONFLICT');
+    expect(Object.keys(conflict.body.error).sort()).toEqual(['code', 'correlation_id', 'message']);
+    expect((await pool.query('SELECT count(*)::int AS count FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, concurrentKey])).rows[0].count).toBe(1);
+    await pool.query('DELETE FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, concurrentStudentId]);
+    await pool.query('DELETE FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, concurrentKey]);
+    await pool.query('DELETE FROM student_service_assignment WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, concurrentStudentId]);
+    await pool.query('DELETE FROM student WHERE id=$1', [concurrentStudentId]);
+  });
+
+  it('rolls back event, current state and audit when audit insertion fails', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const rollbackStudentId = randomUUID(); const rollbackKey = randomUUID();
+    await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4)', [rollbackStudentId, tenantId, schoolId, 'Rollback Student']);
+    await pool.query('INSERT INTO student_service_assignment(id,tenant_id,school_id,service_instance_id,student_id) VALUES($1,$2,$3,$4,$5)', [randomUUID(), tenantId, schoolId, serviceInstanceId, rollbackStudentId]);
+    await pool.query(`CREATE OR REPLACE FUNCTION reject_pickup_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'TEST_AUDIT_FAILURE'; END; $$`);
+    await pool.query("CREATE TRIGGER reject_pickup_audit_trigger BEFORE INSERT ON audit_record FOR EACH ROW WHEN (NEW.action = 'driver_service.pickup') EXECUTE FUNCTION reject_pickup_audit()");
+    try {
+      const response = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${rollbackStudentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', rollbackKey).send({ client_event_id: rollbackKey, occurred_at: new Date().toISOString() });
+      expect(response.status).toBe(500);
+      expect((await pool.query('SELECT count(*)::int AS count FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, rollbackKey])).rows[0].count).toBe(0);
+      expect((await pool.query('SELECT count(*)::int AS count FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, rollbackStudentId])).rows[0].count).toBe(0);
+      expect((await pool.query("SELECT count(*)::int AS count FROM audit_record WHERE tenant_id=$1 AND target_id=$2 AND action='driver_service.pickup'", [tenantId, rollbackStudentId])).rows[0].count).toBe(0);
+    } finally {
+      await pool.query('DROP TRIGGER IF EXISTS reject_pickup_audit_trigger ON audit_record');
+      await pool.query('DROP FUNCTION IF EXISTS reject_pickup_audit()');
+      await pool.query('DELETE FROM student_service_assignment WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, rollbackStudentId]);
+      await pool.query('DELETE FROM student WHERE id=$1', [rollbackStudentId]);
+    }
   });
 });
