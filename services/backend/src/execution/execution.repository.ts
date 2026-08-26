@@ -180,8 +180,8 @@ export class ExecutionRepository implements OnModuleDestroy {
       const nextVersion = currentVersion + 1;
       const eventId = randomUUID();
       const inserted = await client.query<{ recorded_at: string }>(
-        `INSERT INTO transport_event(id,tenant_id,school_id,service_instance_id,student_id,actor_id,actor_role,event_type,client_event_id,fingerprint,occurred_at,state_version)
-         VALUES($1,$2,$3,$4,$5,$6,'driver','pickup',$7,$8,$9,NOW()) RETURNING recorded_at`, [eventId, row.tenant_id, row.school_id, serviceInstanceId, studentId, actorId, input.clientEventId, fingerprint, input.occurredAt]);
+        `INSERT INTO transport_event(id,tenant_id,school_id,service_instance_id,student_id,actor_id,actor_role,event_type,client_event_id,fingerprint,occurred_at,recorded_at,state_version)
+         VALUES($1,$2,$3,$4,$5,$6,'driver','pickup',$7,$8,$9,NOW(),$10) RETURNING recorded_at`, [eventId, row.tenant_id, row.school_id, serviceInstanceId, studentId, actorId, input.clientEventId, fingerprint, input.occurredAt, nextVersion]);
       await client.query(
         `INSERT INTO student_transport_current_state(tenant_id,school_id,service_instance_id,student_id,pickup_state,last_event_id,version,committed_at)
          VALUES($1,$2,$3,$4,'picked_up',$5,$6,$7)
