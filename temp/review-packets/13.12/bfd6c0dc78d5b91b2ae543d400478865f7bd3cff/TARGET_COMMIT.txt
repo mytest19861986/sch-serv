@@ -1,0 +1,9 @@
+TARGET_SHA=bfd6c0dc78d5b91b2ae543d400478865f7bd3cff
+commit bfd6c0dc78d5b91b2ae543d400478865f7bd3cff
+parent c3210996b192fbeb5956bf815533b9330fdd7fa6
+tree afe230f58f1080f5ae953b70542bdee1158769f1
+author mytest19861986 <mytest19861986@users.noreply.github.com>
+author-date 2026-08-26T12:37:27+03:30
+committer mytest19861986 <mytest19861986@users.noreply.github.com>
+committer-date 2026-08-26T12:37:27+03:30
+subject fix: isolate pickup parity fixtures
