@@ -106,7 +106,7 @@ Successful response semantics SHALL include a disposition (`COMMITTED` or `REPLA
 
 ## 8. Duplicate and Idempotency Semantics
 
-The authoritative API contract requires scoped identity and immutable fingerprint semantics. Scope SHALL include tenant, operation, authorized actor/assignment and device context where device context is part of the approved contract. The same identity and fingerprint may replay the prior safe result; a changed fingerprint or scope is a stable conflict/security outcome. Authorization SHALL be re-evaluated before replay disclosure, so revocation cannot be bypassed by an old key.
+The authoritative API contract requires scoped identity and immutable fingerprint semantics. The fingerprint SHALL contain only stable business intent: actor, tenant/school, service instance, student, event type, and known state version. `occurred_at`, `device_context`, and other client metadata are provenance only and SHALL NOT change replay identity. The same identity and intent may replay the prior safe result; a changed intent or scope is a stable conflict/security outcome. Authorization SHALL be re-evaluated before replay disclosure, so revocation cannot be bypassed by an old key. Concurrent unique-key races SHALL be reconciled as replay or conflict after rollback and re-authorization, never as an unhandled 500.
 
 The exact key format, entropy, retention window, canonical fingerprint fields and whether `client_event_id` and `Idempotency-Key` are one identity or two coordinated identities are `OPEN_DECISION` items below.
 
@@ -176,7 +176,7 @@ The Commander adjudicated all open decisions. Implementation is authorized only 
 | OD-007 correction | Event and audit are immutable. Corrections use a future compensating-event slice; no correction endpoint/event is created here. |
 | OD-008 limits | Inherit existing central API/security policy and configuration; do not invent thresholds or claim benchmarks. |
 
-Required mutation lock order is: live user/membership/role; tenant and school; `service_instance`; active Driver assignment; student and active student assignment; `student_transport_current_state`; idempotency/event identity; mutation plus append-only event and audit; commit. All tenant/school/service/student foreign keys must enforce consistency. Canonical time is server time; `occurred_at` is untrusted provenance. Fingerprints cover actor, tenant, school, service instance, student, event type and canonical payload.
+Required mutation lock order is: live user/membership/role; tenant and school; `service_instance`; active Driver assignment; student and active student assignment; `student_transport_current_state`; idempotency/event identity; mutation plus append-only event and audit; commit. All tenant/school/service/student foreign keys must enforce consistency. Canonical time is server time; `occurred_at` is untrusted provenance. Fingerprints cover actor, tenant, school, service instance, student, event type and `known_state_version` only; volatile client metadata is excluded.
 
 ## 15. Open Decisions for Adjudication
 

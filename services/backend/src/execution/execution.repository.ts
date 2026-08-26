@@ -20,6 +20,11 @@ function error(code: string): Error { const value = new Error(code); Object.assi
 function toSummary(row: ServiceRow): ServiceExecutionSummary {
   return { id: row.id, tenantId: row.tenant_id, schoolId: row.school_id, operationalDate: String(row.operational_date), lifecycleStatus: row.lifecycle_status, executionStatus: row.execution_status, version: row.version };
 }
+function pickupFingerprint(actorId: string, row: ServiceRow, serviceInstanceId: string, studentId: string, input: PickupInput): string {
+  // Only stable business intent participates in identity. Client provenance and
+  // device metadata are deliberately excluded so legitimate retries replay.
+  return createHash('sha256').update(JSON.stringify({ actorId, tenantId: row.tenant_id, schoolId: row.school_id, serviceInstanceId, studentId, eventType: 'pickup', knownStateVersion: input.knownStateVersion ?? null })).digest('hex');
+}
 
 @Injectable()
 export class ExecutionRepository implements OnModuleDestroy {
@@ -158,7 +163,7 @@ export class ExecutionRepository implements OnModuleDestroy {
       if (idempotencyKey.toLowerCase() !== input.clientEventId.toLowerCase()) throw error('PICKUP_INVALID_IDENTITY');
       const current = await client.query<{ pickup_state: string; version: number }>(
         `SELECT pickup_state, version FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3 FOR UPDATE`, [row.tenant_id, serviceInstanceId, studentId]);
-      const fingerprint = createHash('sha256').update(JSON.stringify({ actorId, tenantId: row.tenant_id, schoolId: row.school_id, serviceInstanceId, studentId, eventType: 'pickup', payload: input, })).digest('hex');
+      const fingerprint = pickupFingerprint(actorId, row, serviceInstanceId, studentId, input);
       const existing = await client.query<{ id: string; fingerprint: string; state_version: number; recorded_at: string }>(`SELECT id,fingerprint,state_version,recorded_at FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2 FOR UPDATE`, [row.tenant_id, input.clientEventId]);
       if (existing.rows[0]) {
         if (existing.rows[0].fingerprint !== fingerprint) throw error('PICKUP_CONFLICT');
@@ -180,7 +185,33 @@ export class ExecutionRepository implements OnModuleDestroy {
       await client.query(`INSERT INTO audit_record(id,tenant_id,actor_id,actor_type,action,target_type,target_id,outcome,correlation_id) VALUES($1,$2,$3,'human','driver_service.pickup','student',$4,'committed',$5)`, [randomUUID(), row.tenant_id, actorId, studentId, correlationId]);
       await client.query('COMMIT');
       return { disposition: 'COMMITTED', event_id: eventId, service_instance_id: serviceInstanceId, student_id: studentId, state: 'picked_up', state_version: nextVersion, server_time: inserted.rows[0]!.recorded_at, correlation_id: correlationId };
-    } catch (cause) { await client.query('ROLLBACK'); throw cause; } finally { client.release(); }
+    } catch (cause) {
+      const pgCause = cause as { code?: string; constraint?: string };
+      await client.query('ROLLBACK').catch(() => undefined);
+      if (pgCause.code === '23505' && pgCause.constraint === 'transport_event_client_identity_unique') {
+        return this.resolvePickupUniqueRace(actorId, serviceInstanceId, studentId, input, correlationId);
+      }
+      throw cause;
+    } finally { client.release(); }
+  }
+
+  private async resolvePickupUniqueRace(actorId: string, serviceInstanceId: string, studentId: string, input: PickupInput, correlationId: string): Promise<PickupResult> {
+    const retry = await this.pool.connect();
+    try {
+      await retry.query('BEGIN');
+      const row = await this.lockAssignedInstance(retry, actorId, serviceInstanceId);
+      if (row.execution_status !== 'in_progress') throw error('RESOURCE_NOT_FOUND');
+      const assignment = await retry.query(
+        `SELECT s.id FROM student_service_assignment sa JOIN student s ON s.id=sa.student_id AND s.tenant_id=sa.tenant_id AND s.school_id=sa.school_id AND s.status='active'
+         WHERE sa.service_instance_id=$1 AND sa.tenant_id=$2 AND sa.school_id=$3 AND sa.student_id=$4 AND sa.status='active' FOR UPDATE OF sa,s`, [serviceInstanceId, row.tenant_id, row.school_id, studentId]);
+      if (!assignment.rows.length) throw error('RESOURCE_NOT_FOUND');
+      const existing = await retry.query<{ id: string; fingerprint: string; state_version: number; recorded_at: string }>(
+        `SELECT id,fingerprint,state_version,recorded_at FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2 FOR UPDATE`, [row.tenant_id, input.clientEventId]);
+      if (!existing.rows[0]) throw error('PICKUP_CONFLICT');
+      if (existing.rows[0].fingerprint !== pickupFingerprint(actorId, row, serviceInstanceId, studentId, input)) throw error('PICKUP_CONFLICT');
+      await retry.query('COMMIT');
+      return { disposition: 'REPLAYED', event_id: existing.rows[0].id, service_instance_id: serviceInstanceId, student_id: studentId, state: 'picked_up', state_version: existing.rows[0].state_version, server_time: existing.rows[0].recorded_at, correlation_id: correlationId };
+    } catch (cause) { await retry.query('ROLLBACK').catch(() => undefined); throw cause; } finally { retry.release(); }
   }
 
   async onModuleDestroy(): Promise<void> { await this.pool.end(); }

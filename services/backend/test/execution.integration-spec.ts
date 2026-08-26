@@ -94,9 +94,9 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const responses = await Promise.all(cases.map(([, id, authorization]) => request(app.getHttpServer()).get(`/driver/services/${id}/roster`).set('Authorization', `Bearer ${authorization}`)));
     const comparable = responses.map((response) => ({ status: response.status, code: response.body?.error?.code, message: response.body?.error?.message }));
     expect(comparable).toHaveLength(cases.length);
-    for (const value of comparable) expect(value).toEqual({ status: 404, code: 'SAFE_NOT_FOUND', message: 'An unexpected error occurred.' });
+    for (const value of comparable) expect(value).toEqual({ status: 404, code: 'SAFE_NOT_FOUND', message: 'The requested resource was not found.' });
     for (const response of responses) {
-      expect(response.body.error).toEqual(expect.objectContaining({ code: 'SAFE_NOT_FOUND', message: 'An unexpected error occurred.' }));
+      expect(response.body.error).toEqual(expect.objectContaining({ code: 'SAFE_NOT_FOUND', message: 'The requested resource was not found.' }));
       expect(Object.keys(response.body.error).sort()).toEqual(['code', 'correlation_id', 'message']);
       expect(response.body.error).not.toHaveProperty('timestamp');
       expect(response.body.error).not.toHaveProperty('tenant_id');
@@ -120,6 +120,9 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const replay = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
     expect(replay.status).toBe(201);
     expect(replay.body.disposition).toBe('REPLAYED');
+    const metadataVariant = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send({ ...body, occurred_at: new Date(Date.now() + 86400000).toISOString(), device_context: { network: 'changed' } });
+    expect(metadataVariant.status).toBe(201);
+    expect(metadataVariant.body.disposition).toBe('REPLAYED');
     const canonicalEquivalent = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId.toUpperCase()).send({ ...body, client_event_id: clientEventId.toUpperCase() });
     expect(canonicalEquivalent.status).toBe(201);
     expect(canonicalEquivalent.body.disposition).toBe('REPLAYED');
@@ -135,5 +138,22 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     expect(missingKey.status).toBe(400);
     await pool.query('DELETE FROM student_transport_current_state WHERE tenant_id = $1 AND service_instance_id = $2 AND student_id = $3', [tenantId, serviceInstanceId, studentId]);
     await pool.query('DELETE FROM transport_event WHERE tenant_id = $1 AND client_event_id = $2', [tenantId, clientEventId]);
+  });
+
+  it('converges concurrent duplicate keys to one committed event and one replay', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const concurrentStudentId = randomUUID(); const concurrentKey = randomUUID();
+    await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4)', [concurrentStudentId, tenantId, schoolId, 'Concurrent Student']);
+    await pool.query('INSERT INTO student_service_assignment(id,tenant_id,school_id,service_instance_id,student_id) VALUES($1,$2,$3,$4,$5)', [randomUUID(), tenantId, schoolId, serviceInstanceId, concurrentStudentId]);
+    const body = { client_event_id: concurrentKey, occurred_at: new Date().toISOString(), device_context: { attempt: 'one' } };
+    const responses = await Promise.all([1, 2].map(() => request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${concurrentStudentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', concurrentKey).send(body)));
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 201]);
+    expect(responses.map((response) => response.body.disposition).sort()).toEqual(['COMMITTED', 'REPLAYED']);
+    expect((await pool.query('SELECT count(*)::int AS count FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, concurrentKey])).rows[0].count).toBe(1);
+    expect((await pool.query("SELECT count(*)::int AS count FROM audit_record WHERE tenant_id=$1 AND target_id=$2 AND action='driver_service.pickup'", [tenantId, concurrentStudentId])).rows[0].count).toBe(1);
+    await pool.query('DELETE FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, concurrentStudentId]);
+    await pool.query('DELETE FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, concurrentKey]);
+    await pool.query('DELETE FROM student_service_assignment WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, concurrentStudentId]);
+    await pool.query('DELETE FROM student WHERE id=$1', [concurrentStudentId]);
   });
 });

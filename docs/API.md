@@ -54,7 +54,7 @@ High-volume/changing collections use opaque cursor pagination (`limit`, `cursor`
 
 Authentication establishes identity only; authorization and tenant/resource scope are independently evaluated on protected requests.
 
-Critical transport writes require `Idempotency-Key` and `client_event_id` where distinct. Scope includes tenant, operation, actor/assignment/device context and immutable request fingerprint. Same key/context/fingerprint replays a safe prior outcome; different fingerprint/context returns conflict and security/audit signal.
+Critical transport writes require `Idempotency-Key` and `client_event_id` where distinct. The immutable fingerprint covers only stable business intent (actor, tenant/school, service instance, student, event type, and known state version); client timestamps and device metadata are provenance and never alter replay identity. Same key/context/fingerprint replays a safe prior outcome; different intent returns conflict and security/audit signal.
 
 ## 11. Session Contracts
 
@@ -222,7 +222,7 @@ Example request shape: `{ client_event_id, occurred_at, known_state_version?, de
 
 ## 37. Idempotency Contract
 
-Critical writes require scoped identity and immutable fingerprint semantics; current authorization is evaluated before protected replay disclosure.
+Critical writes require scoped identity and immutable fingerprint semantics; current authorization is evaluated before protected replay disclosure. Concurrent unique-key races are reconciled in a new authorized transaction and never surface as an unhandled server error.
 
 Collection response shape: `{ items, next_cursor?, as_of? }`. The `as_of` value informs consumers when derived/read-model freshness matters.
 

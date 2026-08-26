@@ -34,6 +34,8 @@ export class ApiExceptionFilter implements ExceptionFilter {
       AUTHENTICATION_REQUIRED: 'Authentication is required.',
       ACCESS_DENIED: 'Access is denied.',
       VALIDATION_ERROR: 'The request is invalid.',
+      SAFE_NOT_FOUND: 'The requested resource was not found.',
+      STATE_CONFLICT: 'The request conflicts with the current state.',
       SERVICE_UNAVAILABLE: 'The service is temporarily unavailable.',
       INTERNAL_ERROR: 'An unexpected error occurred.'
     };
