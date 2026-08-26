@@ -110,6 +110,44 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     expect((await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${driver}`)).status).toBe(200);
   });
 
+  it('keeps online pickup denials enumeration-safe across target and authority states', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const preStartId = randomUUID(); const unassignedId = randomUUID(); const revokedId = randomUUID();
+    const unassignedStudentId = randomUUID(); const foreignStudentId = randomUUID();
+    await fixture(preStartId, tenantId, schoolId, serviceId, driverProfileId);
+    await pool.query('INSERT INTO service_instance(id,tenant_id,school_id,service_id,operational_date) VALUES($1,$2,$3,$4,CURRENT_DATE)', [unassignedId, tenantId, schoolId, serviceId]);
+    await fixture(revokedId, tenantId, schoolId, serviceId, driverProfileId);
+    const revoked = await pool.query<{ id: string }>('SELECT id FROM driver_service_assignment WHERE service_instance_id=$1', [revokedId]);
+    await pool.query("UPDATE driver_service_assignment SET status='revoked' WHERE id=$1", [revoked.rows[0]!.id]);
+    await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4),($5,$6,$7,$8)', [unassignedStudentId, tenantId, schoolId, 'Unassigned Pickup Student', foreignStudentId, otherTenantId, otherSchoolId, 'Foreign Pickup Student']);
+    const cases = [
+      ['missing-service', randomUUID(), studentId],
+      ['cross-tenant-service', otherInstanceId, studentId],
+      ['cross-school-service', sameTenantForeignSchoolInstanceId, studentId],
+      ['revoked-driver-assignment', revokedId, studentId],
+      ['pre-start-service', preStartId, studentId],
+      ['missing-student', serviceInstanceId, randomUUID()],
+      ['foreign-student', serviceInstanceId, foreignStudentId],
+      ['unassigned-student', serviceInstanceId, unassignedStudentId],
+    ] as const;
+    const responses = await Promise.all(cases.map(([label, instance, student]) => request(app.getHttpServer()).post(`/driver/services/${instance}/students/${student}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', randomUUID()).send({ client_event_id: randomUUID(), occurred_at: new Date().toISOString() }).then((response) => ({ label, response }))));
+    const comparable = responses.map(({ response }) => ({ status: response.status, code: response.body?.error?.code, message: response.body?.error?.message, keys: Object.keys(response.body?.error ?? {}).sort() }));
+    for (const value of comparable) expect(value).toEqual({ status: 404, code: 'SAFE_NOT_FOUND', message: 'The requested resource was not found.', keys: ['code', 'correlation_id', 'message'] });
+    for (const { response } of responses) {
+      expect(response.body.error).not.toHaveProperty('tenant_id');
+      expect(response.body.error).not.toHaveProperty('school_id');
+      expect(response.body.error).not.toHaveProperty('service_instance_id');
+      expect(response.body.error).not.toHaveProperty('student_id');
+      expect(response.body.error).not.toHaveProperty('lifecycle_status');
+    }
+    expect((await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', 'Bearer invalid').set('Idempotency-Key', randomUUID()).send({ client_event_id: randomUUID(), occurred_at: new Date().toISOString() })).status).toBe(401);
+    const expired = await new SignJWT({ roles: ['driver'], tenantId }).setProtectedHeader({ alg: 'HS256', typ: 'JWT' }).setSubject(driverUserId).setIssuedAt().setExpirationTime('0s').sign(new TextEncoder().encode(process.env.AUTH_PROVISIONAL_SIGNING_SECRET!));
+    expect((await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${expired}`).set('Idempotency-Key', randomUUID()).send({ client_event_id: randomUUID(), occurred_at: new Date().toISOString() })).status).toBe(401);
+    await pool.query('DELETE FROM student WHERE id = ANY($1::uuid[])', [[unassignedStudentId, foreignStudentId]]);
+    await pool.query('DELETE FROM driver_service_assignment WHERE service_instance_id = ANY($1::uuid[])', [[preStartId, unassignedId, revokedId]]);
+    await pool.query('DELETE FROM service_instance WHERE id = ANY($1::uuid[])', [[preStartId, unassignedId, revokedId]]);
+  });
+
   it('records online pickup atomically and protects replay and scope', async () => {
     const driver = await token(driverUserId, ['driver'], tenantId);
     const clientEventId = randomUUID();
