@@ -146,17 +146,26 @@ export class ExecutionRepository implements OnModuleDestroy {
       await client.query('BEGIN');
       const instance = await client.query<ServiceRow>(
         `SELECT si.id, si.tenant_id, si.school_id, si.operational_date, si.status AS lifecycle_status, si.execution_status, si.version
-         FROM service_instance si WHERE si.id = $1 AND si.status = 'active' FOR UPDATE`, [serviceInstanceId]);
+         FROM service_instance si WHERE si.id = $1`, [serviceInstanceId]);
       if (!instance.rows[0]) throw error('RESOURCE_NOT_FOUND');
-      const row = instance.rows[0];
+      const discovered = instance.rows[0];
       const authority = await client.query(
         `SELECT u.id FROM "user" u
          JOIN tenant_membership m ON m.user_id=u.id AND m.tenant_id=$2 AND m.status='active'
          JOIN role_assignment ra ON ra.membership_id=m.id AND ra.role='driver' AND ra.status='active'
-         JOIN tenant t ON t.id=m.tenant_id AND t.status='active'
-         JOIN school sc ON sc.id=$3 AND sc.tenant_id=t.id AND sc.status='active'
-         WHERE u.id=$1 AND u.status='active' FOR UPDATE OF u,m,ra,t,sc`, [actorId, row.tenant_id, row.school_id]);
-      if (!authority.rows.length || row.execution_status !== 'in_progress') throw error('RESOURCE_NOT_FOUND');
+         WHERE u.id=$1 AND u.status='active' FOR UPDATE OF u,m,ra`, [actorId, discovered.tenant_id]);
+      const scope = await client.query(
+        `SELECT t.id AS tenant_id, sc.id AS school_id
+         FROM tenant t JOIN school sc ON sc.tenant_id=t.id
+         WHERE t.id=$1 AND sc.id=$2 AND t.status='active' AND sc.status='active'
+         FOR UPDATE OF t,sc`, [discovered.tenant_id, discovered.school_id]);
+      const lockedInstance = await client.query<ServiceRow>(
+        `SELECT si.id, si.tenant_id, si.school_id, si.operational_date, si.status AS lifecycle_status, si.execution_status, si.version
+         FROM service_instance si
+         WHERE si.id=$1 AND si.tenant_id=$2 AND si.school_id=$3 AND si.status='active'
+         FOR UPDATE`, [serviceInstanceId, discovered.tenant_id, discovered.school_id]);
+      if (!authority.rows.length || !scope.rows.length || !lockedInstance.rows.length || lockedInstance.rows[0]!.execution_status !== 'in_progress') throw error('RESOURCE_NOT_FOUND');
+      const row = lockedInstance.rows[0]!;
       const assignment = await client.query(
         `SELECT da.id FROM driver_service_assignment da JOIN driver_profile dp ON dp.id=da.driver_id AND dp.tenant_id=da.tenant_id AND dp.status='active'
          WHERE da.service_instance_id=$1 AND da.tenant_id=$2 AND da.school_id=$3 AND da.status='active' AND dp.user_id=$4 FOR UPDATE OF da,dp`, [serviceInstanceId, row.tenant_id, row.school_id, actorId]);
