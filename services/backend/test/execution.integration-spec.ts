@@ -109,4 +109,20 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     await request(app.getHttpServer()).post(`/driver/services/${pendingInstanceId}/start`).set('Authorization', `Bearer ${driver}`).send({ expectedVersion: 1 });
     expect((await request(app.getHttpServer()).get(`/driver/services/${pendingInstanceId}/roster`).set('Authorization', `Bearer ${driver}`)).status).toBe(200);
   });
+
+  it('records online pickup atomically and protects replay and scope', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const clientEventId = randomUUID();
+    const body = { client_event_id: clientEventId, occurred_at: new Date().toISOString() };
+    const first = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
+    expect(first.status).toBe(201);
+    expect(first.body.disposition).toBe('COMMITTED');
+    const replay = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
+    expect(replay.status).toBe(201);
+    expect(replay.body.disposition).toBe('REPLAYED');
+    expect((await pool.query('SELECT count(*)::int AS count FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, clientEventId])).rows[0].count).toBe(1);
+    const foreign = await token(otherDriverUserId, ['driver'], otherTenantId);
+    const denied = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${foreign}`).set('Idempotency-Key', randomUUID()).send({ ...body, client_event_id: randomUUID() });
+    expect(denied.status).toBe(404);
+  });
 });

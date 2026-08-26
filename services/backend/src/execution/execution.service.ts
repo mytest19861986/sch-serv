@@ -1,12 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExecutionAuthorizationPolicy, type ExecutionAuthorizationContext } from './execution.policy.js';
 import { ExecutionRepository } from './execution.repository.js';
-import { isUuid, parseStartInput } from './execution.types.js';
+import { isUuid, parsePickupInput, parseStartInput } from './execution.types.js';
 
 function persist<T>(operation: () => Promise<T>): Promise<T> {
   return operation().catch((cause: unknown) => {
     const code = (cause as { code?: string }).code;
     if (code === 'VERSION_CONFLICT') throw new ConflictException();
+    if (code === 'PICKUP_CONFLICT') throw new ConflictException();
     if (code === 'RESOURCE_NOT_FOUND' || code === 'AUTHORITY_REVOKED') throw new NotFoundException();
     throw cause;
   });
@@ -20,4 +21,10 @@ export class ExecutionService {
   transportState(context: ExecutionAuthorizationContext, id: string) { this.assertDriver(context); if (!isUuid(id)) throw new NotFoundException(); return persist(() => this.repository.transportState(context.principal.subject, id)); }
   roster(context: ExecutionAuthorizationContext, id: string) { this.assertDriver(context); if (!isUuid(id)) throw new NotFoundException(); return persist(() => this.repository.roster(context.principal.subject, id)); }
   start(context: ExecutionAuthorizationContext, id: string, body: unknown) { this.assertDriver(context); if (!isUuid(id)) throw new NotFoundException(); const input = parseStartInput(body); return persist(() => this.repository.start(context.principal.subject, id, input, context.correlationId)); }
+  pickup(context: ExecutionAuthorizationContext, serviceInstanceId: string, studentId: string, body: unknown, idempotencyKey?: string) {
+    this.assertDriver(context);
+    if (!isUuid(serviceInstanceId) || !isUuid(studentId) || !idempotencyKey?.trim()) throw new NotFoundException();
+    const input = parsePickupInput(body);
+    return persist(() => this.repository.pickup(context.principal.subject, serviceInstanceId, studentId, input, context.correlationId));
+  }
 }

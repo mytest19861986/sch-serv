@@ -110,6 +110,8 @@ Student APIs are school-scoped, minimize sensitive child data, and apply safe en
 
 `POST /driver/services/{service_instance_id}/students/{student_id}/pickup` accepts event type, `client_event_id`, idempotency key, client occurred time, optional client-known state version and device/session context. Response distinguishes committed, replayed, rejected and conflict outcomes with canonical event/state/version/times.
 
+Slice 13.12 binds this contract to `event_type='pickup'` with `snake_case` fields and `COMMITTED`/`REPLAYED` dispositions. `client_event_id` is the single immutable idempotency identity, unique within a tenant; replay is disclosed only after full live re-authorization. A matching fingerprint replays safely without a second event or audit row; a changed fingerprint or already-picked-up state returns the generic `409` conflict family. Invalid/expired JWT is `401`; missing, foreign, revoked, unassigned, inactive-lifecycle or pre-start targets use one enumeration-safe generic `404`; malformed payload is `400`. Server time is canonical and `occurred_at` is provenance only. No outbox intent, notification, offline sync, drop-off, GPS or correction event is part of this slice.
+
 ## 20. Parent/Guardian APIs
 
 Guardian records and Parent surfaces are distinct: Parent access is relationship-bound and recalculated for every read.

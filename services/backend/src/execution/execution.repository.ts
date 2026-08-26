@@ -1,7 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
-import type { DriverRosterEntry, ExecutionStatus, ServiceExecutionSummary, StartServiceInput } from './execution.types.js';
+import type { DriverRosterEntry, ExecutionStatus, PickupInput, PickupResult, ServiceExecutionSummary, StartServiceInput } from './execution.types.js';
 
 export const EXECUTION_DB = Symbol('EXECUTION_DB');
 
@@ -136,6 +137,58 @@ export class ExecutionRepository implements OnModuleDestroy {
       );
       await client.query('COMMIT');
       return toSummary(updated.rows[0]);
+    } catch (cause) { await client.query('ROLLBACK'); throw cause; } finally { client.release(); }
+  }
+
+  async pickup(actorId: string, serviceInstanceId: string, studentId: string, input: PickupInput, correlationId: string): Promise<PickupResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const instance = await client.query<ServiceRow>(
+        `SELECT si.id, si.tenant_id, si.school_id, si.operational_date, si.status AS lifecycle_status, si.execution_status, si.version
+         FROM service_instance si WHERE si.id = $1 AND si.status = 'active' FOR UPDATE`, [serviceInstanceId]);
+      if (!instance.rows[0]) throw error('RESOURCE_NOT_FOUND');
+      const row = instance.rows[0];
+      const authority = await client.query(
+        `SELECT u.id FROM "user" u
+         JOIN tenant_membership m ON m.user_id=u.id AND m.tenant_id=$2 AND m.status='active'
+         JOIN role_assignment ra ON ra.membership_id=m.id AND ra.role='driver' AND ra.status='active'
+         JOIN tenant t ON t.id=m.tenant_id AND t.status='active'
+         JOIN school sc ON sc.id=$3 AND sc.tenant_id=t.id AND sc.status='active'
+         WHERE u.id=$1 AND u.status='active' FOR UPDATE OF u,m,ra,t,sc`, [actorId, row.tenant_id, row.school_id]);
+      if (!authority.rows.length || row.execution_status !== 'in_progress') throw error('RESOURCE_NOT_FOUND');
+      const assignment = await client.query(
+        `SELECT da.id FROM driver_service_assignment da JOIN driver_profile dp ON dp.id=da.driver_id AND dp.tenant_id=da.tenant_id AND dp.status='active'
+         WHERE da.service_instance_id=$1 AND da.tenant_id=$2 AND da.school_id=$3 AND da.status='active' AND dp.user_id=$4 FOR UPDATE OF da,dp`, [serviceInstanceId, row.tenant_id, row.school_id, actorId]);
+      if (!assignment.rows.length) throw error('RESOURCE_NOT_FOUND');
+      const studentAssignment = await client.query(
+        `SELECT s.id FROM student_service_assignment sa JOIN student s ON s.id=sa.student_id AND s.tenant_id=sa.tenant_id AND s.school_id=sa.school_id AND s.status='active'
+         WHERE sa.service_instance_id=$1 AND sa.tenant_id=$2 AND sa.school_id=$3 AND sa.student_id=$4 AND sa.status='active' FOR UPDATE OF sa,s`, [serviceInstanceId, row.tenant_id, row.school_id, studentId]);
+      if (!studentAssignment.rows.length) throw error('RESOURCE_NOT_FOUND');
+      const current = await client.query<{ pickup_state: string; version: number }>(
+        `SELECT pickup_state, version FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3 FOR UPDATE`, [row.tenant_id, serviceInstanceId, studentId]);
+      const fingerprint = createHash('sha256').update(JSON.stringify({ actorId, tenantId: row.tenant_id, schoolId: row.school_id, serviceInstanceId, studentId, eventType: 'pickup', payload: input, })).digest('hex');
+      const existing = await client.query<{ id: string; fingerprint: string; state_version: number; recorded_at: string }>(`SELECT id,fingerprint,state_version,recorded_at FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2 FOR UPDATE`, [row.tenant_id, input.clientEventId]);
+      if (existing.rows[0]) {
+        if (existing.rows[0].fingerprint !== fingerprint) throw error('PICKUP_CONFLICT');
+        await client.query('COMMIT');
+        return { disposition: 'REPLAYED', event_id: existing.rows[0].id, service_instance_id: serviceInstanceId, student_id: studentId, state: 'picked_up', state_version: existing.rows[0].state_version, server_time: existing.rows[0].recorded_at, correlation_id: correlationId };
+      }
+      const currentVersion = current.rows[0]?.version ?? 0;
+      if (input.knownStateVersion !== undefined && input.knownStateVersion !== currentVersion) throw error('PICKUP_CONFLICT');
+      if (current.rows[0]?.pickup_state === 'picked_up') throw error('PICKUP_CONFLICT');
+      const nextVersion = currentVersion + 1;
+      const eventId = randomUUID();
+      const inserted = await client.query<{ recorded_at: string }>(
+        `INSERT INTO transport_event(id,tenant_id,school_id,service_instance_id,student_id,actor_id,actor_role,event_type,client_event_id,fingerprint,occurred_at,state_version)
+         VALUES($1,$2,$3,$4,$5,$6,'driver','pickup',$7,$8,$9,NOW()) RETURNING recorded_at`, [eventId, row.tenant_id, row.school_id, serviceInstanceId, studentId, actorId, input.clientEventId, fingerprint, input.occurredAt]);
+      await client.query(
+        `INSERT INTO student_transport_current_state(tenant_id,school_id,service_instance_id,student_id,pickup_state,last_event_id,version,committed_at)
+         VALUES($1,$2,$3,$4,'picked_up',$5,$6,$7)
+         ON CONFLICT (tenant_id,service_instance_id,student_id) DO UPDATE SET pickup_state='picked_up',last_event_id=EXCLUDED.last_event_id,version=EXCLUDED.version,committed_at=EXCLUDED.committed_at`, [row.tenant_id, row.school_id, serviceInstanceId, studentId, eventId, nextVersion, inserted.rows[0]!.recorded_at]);
+      await client.query(`INSERT INTO audit_record(id,tenant_id,actor_id,actor_type,action,target_type,target_id,outcome,correlation_id) VALUES($1,$2,$3,'human','driver_service.pickup','student',$4,'committed',$5)`, [randomUUID(), row.tenant_id, actorId, studentId, correlationId]);
+      await client.query('COMMIT');
+      return { disposition: 'COMMITTED', event_id: eventId, service_instance_id: serviceInstanceId, student_id: studentId, state: 'picked_up', state_version: nextVersion, server_time: inserted.rows[0]!.recorded_at, correlation_id: correlationId };
     } catch (cause) { await client.query('ROLLBACK'); throw cause; } finally { client.release(); }
   }
 
