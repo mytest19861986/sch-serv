@@ -115,7 +115,7 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const clientEventId = randomUUID();
     const body = { client_event_id: clientEventId, occurred_at: new Date().toISOString() };
     const first = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
-    expect(first.status).toBe(201);
+    if (first.status !== 201) throw new Error(`pickup response ${first.status}: ${JSON.stringify(first.body)}`);
     expect(first.body.disposition).toBe('COMMITTED');
     const replay = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${studentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', clientEventId).send(body);
     expect(replay.status).toBe(201);
