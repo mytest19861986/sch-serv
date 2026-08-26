@@ -1,7 +1,8 @@
 ﻿# Slice 13.12 Review Evidence Manifest
 
 Target SHA: bfd6c0dc78d5b91b2ae543d400478865f7bd3cff
-Evidence commit for file contents: a2ae96ec01cae97c0cd4c57b58a3c29655da9fbb
+Evidence commit: 454bdbc (complete 39-file evidence packet)
+Prior source-content evidence commit: a2ae96ec01cae97c0cd4c57b58a3c29655da9fbb
 Evidence branch: codex/review-evidence-slice-13-12
 Repository remains private. Never merge this evidence branch into the code branch or main.
 
@@ -219,5 +220,23 @@ Repository remains private. Never merge this evidence branch into the code branc
   Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/services/backend/test/students.integration-spec.ts
   Git blob hash: d0a086fb7111723c06b515974f16bc9288b33a49
   SHA-256: 722be076614de4efb0561b42cb471ef77db7b673933e95ae9805b54f5355072c
+  BLOB_MATCH: True
+
+- Source: .github/workflows/validate.yml
+  Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/.github/workflows/validate.yml
+  Git blob hash: c196a27abdd74040c342185a68bdece0e7e735a7
+  SHA-256: 1feacd5d780af42b54692426bf008822c2bd2437c0a1173faa521eb569f4bbef
+  BLOB_MATCH: True
+
+- Source: services/backend/src/assignments/assignments.policy.spec.ts
+  Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/services/backend/src/assignments/assignments.policy.spec.ts
+  Git blob hash: cf90b616839186022bcb60d0bef3974d76516ff5
+  SHA-256: 3ff9f729b56a2627798bc6528b8beb2368ad00b7d30bce5c8656f4fe53765fc3
+  BLOB_MATCH: True
+
+- Source: services/backend/src/authz/authz.controller.ts
+  Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/services/backend/src/authz/authz.controller.ts
+  Git blob hash: 3e88aa434e26dea1a4ab45dccf323c8d2a8a00be
+  SHA-256: 8e544ee6a4220f9330e7d166947d5c7456582a5d7d0b91ae02e2eed50e3afe4d
   BLOB_MATCH: True
 

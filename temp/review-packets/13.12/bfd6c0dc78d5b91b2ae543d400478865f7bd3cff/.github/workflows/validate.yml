@@ -1,0 +1,48 @@
+name: Foundation Validation
+on: [pull_request, push]
+permissions:
+  contents: read
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Validate required foundation files
+        run: |
+          test -f README.md && test -f .env.example && test -f CONTRIBUTING.md && test -f SECURITY.md && test -f .github/CODEOWNERS && test -f tests/README.md && test -d docs
+          test -f apps/android-driver/README.md && test -f apps/android-parent/README.md && test -f apps/web-school-dashboard/README.md && test -f apps/web-admin-dashboard/README.md && test -f services/backend/README.md && test -f packages/README.md && test -f infrastructure/README.md && test -f scripts/README.md
+          ! git ls-files | grep -E '(^|/)(\.env|.*\.(pem|key|p12|pfx)|google-services\.json|GoogleService-Info\.plist|.*\.tfstate)$'
+  backend-foundation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres@sha256:c31077828b6a25f169fcd1bdf769af0e1c5cb8eb14a5729c8bc766842347580b
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: school_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d school_service"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/school_service
+      AUTH_PROVISIONAL_SIGNING_SECRET: test-secret-that-is-at-least-thirty-two-chars
+    defaults:
+      run:
+        working-directory: services/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm db:migrate
+      - run: pnpm test
+      - run: pnpm test:integration
