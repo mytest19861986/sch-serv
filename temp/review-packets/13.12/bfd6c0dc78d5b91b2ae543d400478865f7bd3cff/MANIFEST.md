@@ -1,7 +1,7 @@
 ﻿# Slice 13.12 Review Evidence Manifest
 
 Target SHA: bfd6c0dc78d5b91b2ae543d400478865f7bd3cff
-Evidence commit: pending (corrected canonical 39-file evidence packet)
+Evidence commit: 9491238 (corrected canonical 39-file evidence packet)
 Prior source-content evidence commit: a2ae96ec01cae97c0cd4c57b58a3c29655da9fbb
 Evidence branch: codex/review-evidence-slice-13-12
 Repository remains private. Never merge this evidence branch into the code branch or main.
