@@ -8,6 +8,7 @@ function persist<T>(operation: () => Promise<T>): Promise<T> {
     const code = (cause as { code?: string }).code;
     if (code === 'VERSION_CONFLICT') throw new ConflictException();
     if (code === 'PICKUP_CONFLICT') throw new ConflictException();
+    if (code === 'PICKUP_INVALID_IDENTITY') throw new BadRequestException();
     if (code === 'RESOURCE_NOT_FOUND' || code === 'AUTHORITY_REVOKED') throw new NotFoundException();
     throw cause;
   });

@@ -174,7 +174,7 @@ export class ExecutionRepository implements OnModuleDestroy {
         `SELECT s.id FROM student_service_assignment sa JOIN student s ON s.id=sa.student_id AND s.tenant_id=sa.tenant_id AND s.school_id=sa.school_id AND s.status='active'
          WHERE sa.service_instance_id=$1 AND sa.tenant_id=$2 AND sa.school_id=$3 AND sa.student_id=$4 AND sa.status='active' FOR UPDATE OF sa,s`, [serviceInstanceId, row.tenant_id, row.school_id, studentId]);
       if (!studentAssignment.rows.length) throw error('RESOURCE_NOT_FOUND');
-      if (idempotencyKey.toLowerCase() !== input.clientEventId.toLowerCase()) throw error('PICKUP_CONFLICT');
+      if (idempotencyKey.toLowerCase() !== input.clientEventId.toLowerCase()) throw error('PICKUP_INVALID_IDENTITY');
       const current = await client.query<{ pickup_state: string; version: number }>(
         `SELECT pickup_state, version FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3 FOR UPDATE`, [row.tenant_id, serviceInstanceId, studentId]);
       const fingerprint = createHash('sha256').update(JSON.stringify({ actorId, tenantId: row.tenant_id, schoolId: row.school_id, serviceInstanceId, studentId, eventType: 'pickup', payload: input, })).digest('hex');

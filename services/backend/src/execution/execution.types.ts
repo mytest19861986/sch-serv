@@ -59,5 +59,5 @@ export function parsePickupInput(body: unknown): PickupInput {
     const context = value.device_context as Record<string, unknown>;
     if (!context || typeof context !== 'object' || Array.isArray(context) || Object.keys(context).length > 8 || Object.keys(context).some((key) => key.length > 40 || typeof context[key] !== 'string' || String(context[key]).length > 200)) throw new BadRequestException();
   }
-  return { clientEventId: value.client_event_id, occurredAt: value.occurred_at, knownStateVersion: value.known_state_version === undefined ? undefined : Number(value.known_state_version), deviceContext: value.device_context as Record<string, string> | undefined };
+  return { clientEventId: value.client_event_id.toLowerCase(), occurredAt: value.occurred_at, knownStateVersion: value.known_state_version === undefined ? undefined : Number(value.known_state_version), deviceContext: value.device_context as Record<string, string> | undefined };
 }
