@@ -114,9 +114,9 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     const driver = await token(driverUserId, ['driver'], tenantId);
     const preStartId = randomUUID(); const unassignedId = randomUUID(); const revokedId = randomUUID();
     const unassignedStudentId = randomUUID(); const foreignStudentId = randomUUID();
-    await fixture(preStartId, tenantId, schoolId, serviceId, driverProfileId);
-    await pool.query('INSERT INTO service_instance(id,tenant_id,school_id,service_id,operational_date) VALUES($1,$2,$3,$4,CURRENT_DATE)', [unassignedId, tenantId, schoolId, serviceId]);
-    await fixture(revokedId, tenantId, schoolId, serviceId, driverProfileId);
+    await fixture(preStartId, tenantId, schoolId, serviceId, driverProfileId, 5);
+    await pool.query('INSERT INTO service_instance(id,tenant_id,school_id,service_id,operational_date) VALUES($1,$2,$3,$4,CURRENT_DATE + 6)', [unassignedId, tenantId, schoolId, serviceId]);
+    await fixture(revokedId, tenantId, schoolId, serviceId, driverProfileId, 7);
     const revoked = await pool.query<{ id: string }>('SELECT id FROM driver_service_assignment WHERE service_instance_id=$1', [revokedId]);
     await pool.query("UPDATE driver_service_assignment SET status='revoked' WHERE id=$1", [revoked.rows[0]!.id]);
     await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4),($5,$6,$7,$8)', [unassignedStudentId, tenantId, schoolId, 'Unassigned Pickup Student', foreignStudentId, otherTenantId, otherSchoolId, 'Foreign Pickup Student']);
