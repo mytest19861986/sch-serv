@@ -1,7 +1,7 @@
 ﻿# Slice 13.12 Review Evidence Manifest
 
 Target SHA: bfd6c0dc78d5b91b2ae543d400478865f7bd3cff
-Evidence commit: 454bdbc (complete 39-file evidence packet)
+Evidence commit: pending (corrected canonical 39-file evidence packet)
 Prior source-content evidence commit: a2ae96ec01cae97c0cd4c57b58a3c29655da9fbb
 Evidence branch: codex/review-evidence-slice-13-12
 Repository remains private. Never merge this evidence branch into the code branch or main.
@@ -222,6 +222,12 @@ Repository remains private. Never merge this evidence branch into the code branc
   SHA-256: 722be076614de4efb0561b42cb471ef77db7b673933e95ae9805b54f5355072c
   BLOB_MATCH: True
 
+- Source: docs/project-management/IMPLEMENTATION_SLICES/13_10_ASSIGNMENTS.md
+  Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/docs/project-management/IMPLEMENTATION_SLICES/13_10_ASSIGNMENTS.md
+  Git blob hash: 8cc692a73be87c10d0bef58693685385ac198c53
+  SHA-256: d7224ba67e674d78d05baa82666dedc75f61e862ab419b3fec57bc0c3fba4107
+  BLOB_MATCH: True
+
 - Source: .github/workflows/validate.yml
   Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/.github/workflows/validate.yml
   Git blob hash: c196a27abdd74040c342185a68bdece0e7e735a7
@@ -234,9 +240,4 @@ Repository remains private. Never merge this evidence branch into the code branc
   SHA-256: 3ff9f729b56a2627798bc6528b8beb2368ad00b7d30bce5c8656f4fe53765fc3
   BLOB_MATCH: True
 
-- Source: services/backend/src/authz/authz.controller.ts
-  Evidence path: temp/review-packets/13.12/bfd6c0dc78d5b91b2ae543d400478865f7bd3cff/services/backend/src/authz/authz.controller.ts
-  Git blob hash: 3e88aa434e26dea1a4ab45dccf323c8d2a8a00be
-  SHA-256: 8e544ee6a4220f9330e7d166947d5c7456582a5d7d0b91ae02e2eed50e3afe4d
-  BLOB_MATCH: True
 
