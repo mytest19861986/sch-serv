@@ -4,7 +4,7 @@
 
 - **Slice:** 13.12
 - **Title:** Online Student Pickup
-- **Status:** `SPECIFICATION_DRAFT_AUTHORIZED`
+- **Status:** `SPECIFICATION_APPROVED_WITH_REQUIRED_AMENDMENTS`
 - **Scope authority:** Commander decision recorded after repository scope audit
 - **Baseline SHA:** `669a417edbe62e941e6c12004a3a54fcd9881145`
 - **Branch:** `phase13/slice-13-12-student-pickup`
@@ -161,7 +161,24 @@ Exact parity grouping between safe denial and known conflicts is an `OPEN_DECISI
 11. Response omits unnecessary child data and internal metadata.
 12. No Drop-off, offline, notification, GPS or scheduler behavior is introduced.
 
-## 14. Open Decisions for Adjudication
+## 14. Adjudicated Decisions
+
+The Commander adjudicated all open decisions. Implementation is authorized only after this amendment is committed. The following decisions are binding for Slice 13.12:
+
+| Decision | Binding outcome |
+|---|---|
+| OD-001 canonical model | Append-only `transport_event` with mutable `student_transport_current_state` projection. `event_type='pickup'`; pickup state values are `not_picked_up` and `picked_up`. |
+| OD-002 idempotency | One identity based on `client_event_id` with an immutable fingerprint. Event uniqueness is `(tenant_id, client_event_id)`. Replays require full re-authorization. |
+| OD-003 contract | `snake_case` payload/response fields; dispositions are `COMMITTED` and `REPLAYED`. `device_context` is optional only when a documented bounded schema exists; unrestricted JSON is forbidden. |
+| OD-004 concurrency | Current-state version is the OCC source; missing current-state row is version zero and is created in the transaction. `service_instance.version` is not changed. Use project-standard isolation, row locks and unique constraints. |
+| OD-005 outbox | No outbox intent is created in this slice. Notification delivery remains out of scope. |
+| OD-006 errors | Invalid/expired JWT: `401`. Missing, foreign, revoked, unassigned, invalid-lifecycle or pre-start targets: one generic `404`. OCC, fingerprint mismatch or duplicate state: `409` family. Malformed payload: `400`; non-UUID selectors fail closed under the same enumeration-safe contract. |
+| OD-007 correction | Event and audit are immutable. Corrections use a future compensating-event slice; no correction endpoint/event is created here. |
+| OD-008 limits | Inherit existing central API/security policy and configuration; do not invent thresholds or claim benchmarks. |
+
+Required mutation lock order is: live user/membership/role; tenant and school; `service_instance`; active Driver assignment; student and active student assignment; `student_transport_current_state`; idempotency/event identity; mutation plus append-only event and audit; commit. All tenant/school/service/student foreign keys must enforce consistency. Canonical time is server time; `occurred_at` is untrusted provenance. Fingerprints cover actor, tenant, school, service instance, student, event type and canonical payload.
+
+## 15. Open Decisions for Adjudication
 
 - `OPEN_DECISION-001`: append-only event plus current-state mutation versus another approved canonical representation; the database document currently favors append-only history plus current state.
 - `OPEN_DECISION-002`: exact `client_event_id`/`Idempotency-Key` relationship, fingerprint fields, retention and replay response body.
@@ -172,8 +189,8 @@ Exact parity grouping between safe denial and known conflicts is an `OPEN_DECISI
 - `OPEN_DECISION-007`: event/current-state/audit retention and correction policy.
 - `OPEN_DECISION-008`: rate, body-size, clock-skew and retry thresholds; no benchmarks are claimed.
 
-## 15. Gate Recommendation
+## 16. Gate Recommendation
 
-`SPECIFICATION_REQUIRES_ADJUDICATION`
+`SPECIFICATION_APPROVED_IMPLEMENTATION_AUTHORIZED`
 
-The Commander has authorized specification work and selected the title/scope. Implementation and migration remain prohibited until the open decisions are adjudicated and this packet is accepted as the implementation gate.
+The Commander approved the specification with the binding amendments above and authorized implementation after this amendment commit. Merge to `main`, deployment, Production Authentication and Slice 13.13 remain locked.
