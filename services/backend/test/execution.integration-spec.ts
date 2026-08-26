@@ -188,6 +188,21 @@ describe('Slice 13.11 Driver Service Execution security boundary', () => {
     await pool.query('DELETE FROM student WHERE id=$1', [concurrentStudentId]);
   });
 
+  it('rejects a stale known state version before creating any pickup effect', async () => {
+    const driver = await token(driverUserId, ['driver'], tenantId);
+    const staleStudentId = randomUUID(); const staleKey = randomUUID();
+    await pool.query('INSERT INTO student(id,tenant_id,school_id,display_name) VALUES($1,$2,$3,$4)', [staleStudentId, tenantId, schoolId, 'Stale Version Student']);
+    await pool.query('INSERT INTO student_service_assignment(id,tenant_id,school_id,service_instance_id,student_id) VALUES($1,$2,$3,$4,$5)', [randomUUID(), tenantId, schoolId, serviceInstanceId, staleStudentId]);
+    const response = await request(app.getHttpServer()).post(`/driver/services/${serviceInstanceId}/students/${staleStudentId}/pickup`).set('Authorization', `Bearer ${driver}`).set('Idempotency-Key', staleKey).send({ client_event_id: staleKey, occurred_at: new Date().toISOString(), known_state_version: 9 });
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe('STATE_CONFLICT');
+    expect(Object.keys(response.body.error).sort()).toEqual(['code', 'correlation_id', 'message']);
+    expect((await pool.query('SELECT count(*)::int AS count FROM transport_event WHERE tenant_id=$1 AND client_event_id=$2', [tenantId, staleKey])).rows[0].count).toBe(0);
+    expect((await pool.query('SELECT count(*)::int AS count FROM student_transport_current_state WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, staleStudentId])).rows[0].count).toBe(0);
+    await pool.query('DELETE FROM student_service_assignment WHERE tenant_id=$1 AND service_instance_id=$2 AND student_id=$3', [tenantId, serviceInstanceId, staleStudentId]);
+    await pool.query('DELETE FROM student WHERE id=$1', [staleStudentId]);
+  });
+
   it('rolls back event, current state and audit when audit insertion fails', async () => {
     const driver = await token(driverUserId, ['driver'], tenantId);
     const rollbackStudentId = randomUUID(); const rollbackKey = randomUUID();
